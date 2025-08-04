@@ -89,22 +89,22 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
              <span className="hidden sm:inline">Export All</span>
           </Button>
     </DialogTrigger>
-    <DialogContent className="sm:max-w-[625px]">
+    <DialogContent className="sm:max-w-[625px] w-[90vw] rounded-lg">
       <DialogHeader>
         <DialogTitle>Export Options</DialogTitle>
         <DialogDescription>
           Download your favicons and get the code to add them to your site.
         </DialogDescription>
       </DialogHeader>
-       <Tabs defaultValue="zip">
+       <Tabs defaultValue="zip" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="zip">Download .ZIP</TabsTrigger>
               <TabsTrigger value="html">HTML Code</TabsTrigger>
               <TabsTrigger value="manifest">Web Manifest</TabsTrigger>
           </TabsList>
           <TabsContent value="zip" className="py-4">
-              <div className="flex flex-col items-center justify-center space-y-4 p-8 bg-secondary/50 rounded-lg">
-                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, `site.webmanifest`, and an example `index.html` in a single .zip file.</p>
+              <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-8 bg-secondary/50 rounded-lg">
+                  <p className="text-center text-sm sm:text-base text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, `site.webmanifest`, and an example `index.html` in a single .zip file.</p>
                    <Button size="lg" onClick={handleDownloadZip}>
                         <Package className="mr-2 h-4 w-4" />
                         Download .ZIP
@@ -134,12 +134,12 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                </div>
           </TabsContent>
       </Tabs>
-      <DialogFooter>
-          <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc}>
+      <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+          <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" /> Download favicon.ico
           </Button>
           <DialogClose asChild>
-               <Button type="button" variant="outline">
+               <Button type="button" variant="outline" className="w-full sm:w-auto">
                   Close
               </Button>
           </DialogClose>
@@ -482,7 +482,7 @@ export default function Home() {
                             Generate Variations
                           </Button>
                           {variations.length > 0 && (
-                            <div className="grid grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
                               {variations.map((v, i) => (
                                 <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
                                   <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
@@ -572,7 +572,7 @@ export default function Home() {
                     </CardHeader>
                     <CardContent className="flex-1">
                         <ScrollArea className="h-full">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
                                   <div className="w-20 h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
@@ -629,11 +629,13 @@ export default function Home() {
              <div className="md:hidden sticky bottom-0 bg-background border-t z-10">
                  <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="tools">
-                    <AccordionTrigger className="p-4 bg-background hover:no-underline">
-                        <div className="flex items-center gap-2 text-lg font-semibold">
-                            <Settings className="w-6 h-6"/>
-                            <span>Tools</span>
-                            <ChevronUp className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron" />
+                    <AccordionTrigger className="p-4 bg-background hover:no-underline data-[state=open]:pb-2">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2 text-lg font-semibold">
+                                <Settings className="w-6 h-6"/>
+                                <span>Tools</span>
+                            </div>
+                            <ChevronUp className="h-5 w-5 shrink-0 transition-transform duration-200 accordion-chevron" />
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -650,10 +652,12 @@ export default function Home() {
         .accordion-chevron {
             transition: transform 0.2s ease-in-out;
         }
-        [data-state=open] .accordion-chevron {
+        [data-state=open] > button > div > .accordion-chevron {
             transform: rotate(180deg);
         }
       `}</style>
     </div>
   );
 }
+
+    
