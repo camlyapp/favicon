@@ -78,7 +78,21 @@ export default function EditorPage() {
                  canvas.height = size;
                  ctx.fillStyle = canvasColor;
                  ctx.fillRect(0,0,size,size);
-                 ctx.drawImage(img, 0, 0, size, size);
+
+                 const imgAspectRatio = img.width / img.height;
+                 let drawWidth = size;
+                 let drawHeight = size;
+
+                 if (imgAspectRatio > 1) {
+                    drawHeight = size / imgAspectRatio;
+                 } else {
+                    drawWidth = size * imgAspectRatio;
+                 }
+
+                 const xOffset = (size - drawWidth) / 2;
+                 const yOffset = (size - drawHeight) / 2;
+                 
+                 ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
                  
                  // After drawing, if we are not cropping, set a default crop rect for later
                  if (!isCropping) {
