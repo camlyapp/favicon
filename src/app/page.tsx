@@ -12,6 +12,12 @@ import { useToast } from '@/hooks/use-toast';
 import { handleGenerateVariations } from '@/app/actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
+import {
   Upload,
   RefreshCw,
   Square,
@@ -24,12 +30,14 @@ import {
   Paintbrush,
   Palette,
   Eye,
-  Settings
+  Settings,
+  ChevronUp,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const SIZES = [16, 32, 48, 64, 128, 192, 256, 512];
+const SIZES = [16, 32, 48, 64, 72, 96, 128, 144, 152, 180, 192, 196, 256, 512];
+
 
 interface GeneratedSize {
   size: number;
@@ -185,30 +193,8 @@ export default function Home() {
     document.body.removeChild(link);
   };
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl font-bold">Favicon Forge</h1>
-        </div>
-        <div className="flex items-center gap-2">
-            <Button onClick={handleGenerateAllSizes} disabled={!faviconSrc} variant="outline">
-              <Settings className="mr-2 h-4 w-4" />
-              Generate Sizes
-            </Button>
-            <Button size="md" onClick={handleDownloadZip} disabled={generatedSizes.length === 0}>
-              <Package className="mr-2 h-4 w-4" />
-              Export All (ZIP)
-            </Button>
-        </div>
-      </header>
-
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[400px_1fr] gap-0">
-        {/* Left Panel: Tools */}
-        <aside className="border-r border-border flex flex-col">
+    const ToolPanel = () => (
+        <>
             <div className="p-4 space-y-4">
                  <Button className="w-full" size="lg" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-4 w-4" /> Upload Image
@@ -224,7 +210,7 @@ export default function Home() {
             </div>
             <Separator/>
             <Tabs defaultValue="ai" className="flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 m-4">
+                <TabsList className="grid w-full grid-cols-2 mx-auto my-4 max-w-[calc(100%-2rem)]">
                     <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4"/> AI Tools</TabsTrigger>
                     <TabsTrigger value="editor"><Paintbrush className="mr-2 h-4 w-4"/> Editor</TabsTrigger>
                 </TabsList>
@@ -276,14 +262,41 @@ export default function Home() {
                     </TabsContent>
                 </ScrollArea>
             </Tabs>
+        </>
+    )
 
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <h1 className="text-xl font-bold hidden sm:block">Favicon Forge</h1>
+           <h1 className="text-xl font-bold sm:hidden">Forge</h1>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button onClick={handleGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
+              <Settings className="mr-0 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Generate Sizes</span>
+            </Button>
+            <Button size="sm" onClick={handleDownloadZip} disabled={generatedSizes.length === 0}>
+              <Package className="mr-0 sm:mr-2 h-4 w-4" />
+               <span className="hidden sm:inline">Export All</span>
+            </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-[400px_1fr] gap-0">
+        {/* Left Panel: Tools (Desktop) */}
+        <aside className="border-r border-border flex-col hidden md:flex">
+            <ToolPanel/>
         </aside>
 
         {/* Right Panel: Canvas & Preview */}
-        <main className="flex-1 flex flex-col bg-muted/20">
-            {/* Canvas */}
-             <div className="flex-1 flex items-center justify-center p-8">
-              <div className="relative aspect-square w-full max-w-sm bg-white p-4 shadow-2xl rounded-2xl" style={{
+        <div className="flex flex-col bg-muted/20 relative">
+             <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+              <div className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl" style={{
                 backgroundImage: `
                   linear-gradient(45deg, #eee 25%, transparent 25%),
                   linear-gradient(-45deg, #eee 25%, transparent 25%),
@@ -296,26 +309,26 @@ export default function Home() {
                   <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
-                    <Upload className="w-16 h-16 mb-4 text-muted-foreground/50" />
-                    <h3 className="font-semibold text-lg">Start by creating your icon</h3>
-                    <p className="text-sm text-muted-foreground/80 mt-1">Upload an image or start with a blank canvas from the tools on the left.</p>
+                    <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
+                    <h3 className="font-semibold text-lg">Create your icon</h3>
+                    <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Upload an image or start with a blank canvas from the tools.</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Previews */}
-            <div className="bg-background border-t p-4">
+            <div className="bg-background border-t p-2 sm:p-4">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                           <Eye className="w-6 h-6"/> Preview &amp; Export
+                        <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
+                           <Eye className="w-5 h-5 sm:w-6 sm:h-6"/> Preview &amp; Export
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                        {generatedSizes.length > 0 ? (
                         <ScrollArea className="h-48">
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pr-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
                                   <div className="w-16 h-16 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
@@ -334,7 +347,7 @@ export default function Home() {
                            <div className="h-48 flex flex-col items-center justify-center text-center text-muted-foreground p-4 bg-secondary/50 rounded-lg">
                               <Package className="w-10 h-10 mb-2 text-muted-foreground/50" />
                               <p className="font-medium">Generate all sizes for preview</p>
-                              <p className="text-sm">Click the "Generate Sizes" button in the header to create favicons for all standard dimensions.</p>
+                              <p className="text-sm max-w-xs">Click the "Generate Sizes" button to create favicons for all standard dimensions.</p>
                             </div>
                         )}
                     </CardContent>
@@ -348,8 +361,28 @@ export default function Home() {
                     )}
                 </Card>
             </div>
-        </main>
+             {/* Bottom Tools Panel (Mobile) */}
+             <div className="md:hidden sticky bottom-0 bg-background border-t z-10">
+                 <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="tools">
+                    <AccordionTrigger className="p-4 bg-background hover:no-underline">
+                        <div className="flex items-center gap-2 text-lg font-semibold">
+                            <Settings className="w-6 h-6"/>
+                            <span>Tools</span>
+                            <ChevronUp className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                         <div className="max-h-[50vh] overflow-y-auto">
+                            <ToolPanel/>
+                         </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+            </div>
+        </div>
       </main>
     </div>
   );
 }
+
