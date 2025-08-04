@@ -147,7 +147,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 
 const ToolPanel = ({
     fileInputRef,
-    handleImageUpload,
     onGenerateVariations,
     isPending,
     faviconSrc,
@@ -157,7 +156,6 @@ const ToolPanel = ({
     setShowSizes,
 }: {
     fileInputRef: React.RefObject<HTMLInputElement>;
-    handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onGenerateVariations: () => void;
     isPending: boolean;
     faviconSrc: string | null;
@@ -247,6 +245,10 @@ export default function Home() {
         setShowSizes(false);
       };
       reader.readAsDataURL(file);
+    }
+     // Reset file input to allow uploading the same file again
+    if (event.target) {
+        event.target.value = '';
     }
   };
 
@@ -511,6 +513,14 @@ setShowSizes(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+       <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          className="hidden"
+          accept="image/png, image/jpeg, image/svg+xml, image/webp"
+        />
+
       <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
@@ -547,7 +557,6 @@ setShowSizes(false);
         <aside className="border-r border-border flex-col hidden md:flex">
              <ToolPanel
                 fileInputRef={fileInputRef}
-                handleImageUpload={handleImageUpload}
                 onGenerateVariations={onGenerateVariations}
                 isPending={isPending}
                 faviconSrc={faviconSrc}
@@ -644,7 +653,6 @@ setShowSizes(false);
                          <div className="max-h-[50vh] overflow-y-auto">
                              <ToolPanel
                                 fileInputRef={fileInputRef}
-                                handleImageUpload={handleImageUpload}
                                 onGenerateVariations={onGenerateVariations}
                                 isPending={isPending}
                                 faviconSrc={faviconSrc}
