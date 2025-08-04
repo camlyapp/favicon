@@ -317,9 +317,9 @@ export default function EditorPage() {
         </Button>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-0">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0">
         <div 
-          className="flex items-center justify-center bg-muted/20 p-4 relative"
+          className="lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -374,7 +374,7 @@ export default function EditorPage() {
             </div>
         </div>
 
-        <aside className="border-l border-border flex flex-col p-4 space-y-6 overflow-y-auto">
+        <aside className="lg:col-span-1 border-l border-border flex flex-col p-4 space-y-6 overflow-y-auto">
             <div>
                 <Label>Canvas</Label>
                 <div className="flex items-center gap-2 mt-2">

@@ -552,9 +552,9 @@ setShowSizes(false);
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0">
         {/* Left Panel: Tools (Desktop) */}
-        <aside className="border-r border-border flex-col hidden lg:flex">
+        <aside className="lg:col-span-1 border-r border-border flex-col hidden lg:flex">
              <ToolPanel
                 fileInputRef={fileInputRef}
                 onGenerateVariations={onGenerateVariations}
@@ -568,7 +568,7 @@ setShowSizes(false);
         </aside>
 
         {/* Right Panel: Canvas & Previews */}
-        <div className="flex flex-col bg-muted/20 relative">
+        <div className="lg:col-span-2 flex flex-col bg-muted/20 relative">
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
                  <Card className="flex-1 flex flex-col">
