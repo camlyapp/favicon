@@ -217,13 +217,19 @@ export default function Home() {
   useEffect(() => {
     const croppedImage = sessionStorage.getItem('croppedImage');
     if (croppedImage) {
-      setFaviconSrc(croppedImage);
-      sessionStorage.removeItem('croppedImage'); // Clean up
-      setVariations([]);
-      setGeneratedSizes([]);
-      setShowSizes(false);
+        setFaviconSrc(croppedImage);
+        sessionStorage.removeItem('croppedImage');
+        sessionStorage.removeItem('faviconToEdit'); 
+        setVariations([]);
+        setGeneratedSizes([]);
+        setShowSizes(false);
+    } else {
+        const originalImage = sessionStorage.getItem('faviconToEdit');
+        if (originalImage && !faviconSrc) {
+            setFaviconSrc(originalImage);
+        }
     }
-  }, []);
+  }, [faviconSrc]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

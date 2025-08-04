@@ -322,7 +322,7 @@ export default function EditorPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <h1 className="text-xl font-bold">Editor</h1>
