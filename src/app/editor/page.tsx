@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,19 @@ import {
     Type,
     RefreshCw,
     Loader2,
-    Palette
+    Palette,
+    Crop,
+    Check,
+    X
 } from 'lucide-react';
+
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 
 export default function EditorPage() {
   const router = useRouter();
@@ -27,15 +38,22 @@ export default function EditorPage() {
   const [faviconSrc, setFaviconSrc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+
   const [canvasColor, setCanvasColor] = useState('#ffffff');
 
+  // Cropping state
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropRect, setCropRect] = useState<Rect>({ x: 50, y: 50, width: 200, height: 200 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const imageToEdit = sessionStorage.getItem('faviconToEdit');
     if (imageToEdit) {
       setFaviconSrc(imageToEdit);
     } else {
-      // If no image is found, redirect back to the home page
       toast({
         title: "No Image Found",
         description: "Please select an image to edit first.",
@@ -45,7 +63,7 @@ export default function EditorPage() {
     }
     setIsLoading(false);
   }, [router, toast]);
-  
+
   // Draw initial image to canvas
   useEffect(() => {
     if (faviconSrc && canvasRef.current) {
@@ -53,9 +71,13 @@ export default function EditorPage() {
         const ctx = canvas.getContext('2d');
         const img = new window.Image();
         img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
+            const container = canvasContainerRef.current;
+            if (container) {
+                 const size = Math.min(container.clientWidth, container.clientHeight, img.width, img.height, 600);
+                 canvas.width = size;
+                 canvas.height = size;
+                 ctx?.drawImage(img, 0, 0, size, size);
+            }
         };
         img.src = faviconSrc;
     }
@@ -80,7 +102,7 @@ export default function EditorPage() {
       ctx.fillStyle = canvasColor;
       ctx.fillRect(0, 0, 1024, 1024);
       const dataUrl = canvas.toDataURL();
-      setFaviconSrc(dataUrl); // also update the src to re-trigger image drawing
+      setFaviconSrc(dataUrl);
     }
   };
 
@@ -91,10 +113,9 @@ export default function EditorPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // We don't need to redraw the image, just draw shape on top
-    ctx.fillStyle = '#6D28D9'; // A nice primary color
+    ctx.fillStyle = '#A050C3';
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 40;
+    ctx.lineWidth = Math.max(1, canvas.width * 0.04);
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -112,15 +133,120 @@ export default function EditorPage() {
     } else if (shape === 'text') {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = 'bold 200px Inter, sans-serif';
+      ctx.font = `bold ${canvas.width * 0.2}px Inter, sans-serif`;
       ctx.fillText('Aa', centerX, centerY);
       ctx.strokeText('Aa', centerX, centerY);
     }
     
-    // update faviconSrc to reflect the change visually if needed, though canvas is the source of truth
     const dataUrl = canvas.toDataURL();
-    setFaviconSrc(dataUrl); // This will cause a re-render showing the drawn shape
+    setFaviconSrc(dataUrl);
   };
+  
+    const getHandleAt = (e: MouseEvent<HTMLDivElement>) => {
+        const { x, y, width, height } = cropRect;
+        const mouseX = e.nativeEvent.offsetX;
+        const mouseY = e.nativeEvent.offsetY;
+        const handleSize = 10;
+
+        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 'tl';
+        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 'tr';
+        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'bl';
+        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'br';
+
+        if (mouseX > x + handleSize && mouseX < x + width - handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 't';
+        if (mouseX > x + handleSize && mouseX < x + width - handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'b';
+        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'l';
+        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'r';
+
+
+        if (mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height) return 'move';
+        return null;
+    };
+
+    const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+        if (!isCropping) return;
+        const handle = getHandleAt(e);
+        if (handle) {
+            setIsDragging(true);
+            setResizeHandle(handle);
+            setDragStart({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+        }
+    };
+
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+        if (!isDragging || !isCropping || !resizeHandle) return;
+        const dx = e.nativeEvent.offsetX - dragStart.x;
+        const dy = e.nativeEvent.offsetY - dragStart.y;
+        let newRect = { ...cropRect };
+
+        switch (resizeHandle) {
+            case 'tl': newRect = { ...newRect, x: newRect.x + dx, y: newRect.y + dy, width: newRect.width - dx, height: newRect.height - dy }; break;
+            case 'tr': newRect = { ...newRect, y: newRect.y + dy, width: newRect.width + dx, height: newRect.height - dy }; break;
+            case 'bl': newRect = { ...newRect, x: newRect.x + dx, width: newRect.width - dx, height: newRect.height + dy }; break;
+            case 'br': newRect = { ...newRect, width: newRect.width + dx, height: newRect.height + dy }; break;
+            case 't': newRect = { ...newRect, y: newRect.y + dy, height: newRect.height - dy }; break;
+            case 'b': newRect = { ...newRect, height: newRect.height + dy }; break;
+            case 'l': newRect = { ...newRect, x: newRect.x + dx, width: newRect.width - dx }; break;
+            case 'r': newRect = { ...newRect, width: newRect.width + dx }; break;
+            case 'move': newRect = { ...newRect, x: newRect.x + dx, y: newRect.y + dy }; break;
+        }
+
+        // Add constraints if necessary
+        const canvas = canvasRef.current;
+        if (canvas) {
+            if (newRect.x < 0) newRect.x = 0;
+            if (newRect.y < 0) newRect.y = 0;
+            if (newRect.x + newRect.width > canvas.width) newRect.width = canvas.width - newRect.x;
+            if (newRect.y + newRect.height > canvas.height) newRect.height = canvas.height - newRect.y;
+            if (newRect.width < 20) newRect.width = 20;
+            if (newRect.height < 20) newRect.height = 20;
+
+        }
+
+        setCropRect(newRect);
+        setDragStart({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+        setResizeHandle(null);
+    };
+
+    const handleApplyCrop = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const { x, y, width, height } = cropRect;
+        const imageData = ctx.getImageData(x, y, width, height);
+
+        const newCanvas = document.createElement('canvas');
+        newCanvas.width = width;
+        newCanvas.height = height;
+        const newCtx = newCanvas.getContext('2d');
+        if (newCtx) {
+            newCtx.putImageData(imageData, 0, 0);
+            const dataUrl = newCanvas.toDataURL('image/png');
+            setFaviconSrc(dataUrl);
+        }
+        setIsCropping(false);
+    };
+
+    const startCropping = () => {
+        setIsCropping(true);
+        const canvas = canvasRef.current;
+        if(canvas) {
+          const initialSize = Math.min(canvas.width, canvas.height) * 0.5;
+           setCropRect({
+            x: (canvas.width - initialSize) / 2,
+            y: (canvas.height - initialSize) / 2,
+            width: initialSize,
+            height: initialSize,
+          });
+        }
+    };
+
 
   if (isLoading) {
     return (
@@ -143,7 +269,12 @@ export default function EditorPage() {
       </header>
 
       <main className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_350px] gap-0">
-        <div className="flex items-center justify-center bg-muted/20 p-4">
+        <div 
+          className="flex items-center justify-center bg-muted/20 p-4 relative"
+          ref={canvasContainerRef}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
             <div className="relative aspect-square w-full max-w-[600px] bg-white shadow-2xl rounded-2xl"
                  style={{
                     backgroundImage: `
@@ -154,8 +285,48 @@ export default function EditorPage() {
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                 }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
             >
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
+                  {isCropping && (
+                    <>
+                      {/* Overlay */}
+                      <div className="absolute top-0 left-0 w-full h-full bg-black/50"
+                          style={{
+                              clipPath: `polygon(
+                                  0% 0%, 100% 0%, 100% 100%, 0% 100%,
+                                  0% ${cropRect.y}px,
+                                  ${cropRect.x}px ${cropRect.y}px,
+                                  ${cropRect.x}px ${cropRect.y + cropRect.height}px,
+                                  ${cropRect.x + cropRect.width}px ${cropRect.y + cropRect.height}px,
+                                  ${cropRect.x + cropRect.width}px ${cropRect.y}px,
+                                  0 ${cropRect.y}px
+                              )`
+                          }}
+                      />
+                      {/* Border */}
+                      <div className="absolute border-2 border-dashed border-white"
+                          style={{
+                              left: cropRect.x,
+                              top: cropRect.y,
+                              width: cropRect.width,
+                              height: cropRect.height,
+                              cursor: isDragging && resizeHandle === 'move' ? 'grabbing' : 'move'
+                          }}
+                      />
+                      {/* Handles */}
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
+
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: cropRect.x + cropRect.width/2 - 6, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: cropRect.x + cropRect.width/2 - 6, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: cropRect.y + cropRect.height/2 - 6, cursor: 'ew-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: cropRect.y + cropRect.height/2 - 6, cursor: 'ew-resize' }} />
+                    </>
+                  )}
             </div>
         </div>
 
@@ -164,11 +335,25 @@ export default function EditorPage() {
                 <Label>Canvas</Label>
                 <div className="flex items-center gap-2 mt-2">
                     <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
-                    <Button className="w-full" variant="secondary" onClick={handleNewCanvas}>
+                    <Button className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
                         <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
                     </Button>
                 </div>
             </div>
+            <Separator />
+             <div>
+                <h3 className="text-lg font-medium">Crop</h3>
+                {isCropping ? (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button variant="destructive" onClick={() => setIsCropping(false)}><X className="mr-2 h-4 w-4" /> Cancel</Button>
+                    <Button onClick={handleApplyCrop}><Check className="mr-2 h-4 w-4" /> Apply</Button>
+                  </div>
+                ) : (
+                  <Button className="w-full mt-2" variant="secondary" onClick={startCropping}>
+                    <Crop className="mr-2 h-4 w-4" /> Crop Image
+                  </Button>
+                )}
+             </div>
             <Separator />
             <div>
                 <h3 className="text-lg font-medium">Shapes & Text</h3>
@@ -176,9 +361,9 @@ export default function EditorPage() {
                    Click a button to add a basic shape or text to the canvas.
                   </p>
                 <div className="flex justify-start gap-2">
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')}><Square /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')}><Circle /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('text')}><Type /></Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('text')} disabled={isCropping}><Type /></Button>
                 </div>
             </div>
              <div>
@@ -195,3 +380,4 @@ export default function EditorPage() {
     </div>
   );
 }
+
