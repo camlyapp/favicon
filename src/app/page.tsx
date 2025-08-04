@@ -148,6 +148,105 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   </Dialog>
 );
 
+const ToolPanel = ({
+    fileInputRef,
+    handleImageUpload,
+    canvasColor,
+    setCanvasColor,
+    handleNewCanvas,
+    onGenerateVariations,
+    isPending,
+    faviconSrc,
+    variations,
+    setFaviconSrc,
+    setGeneratedSizes,
+    setShowSizes,
+}: {
+    fileInputRef: React.RefObject<HTMLInputElement>;
+    handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    canvasColor: string;
+    setCanvasColor: (color: string) => void;
+    handleNewCanvas: () => void;
+    onGenerateVariations: () => void;
+    isPending: boolean;
+    faviconSrc: string | null;
+    variations: string[];
+    setFaviconSrc: (src: string) => void;
+    setGeneratedSizes: (sizes: GeneratedSize[]) => void;
+    setShowSizes: (show: boolean) => void;
+}) => (
+    <>
+        <div className="p-4 space-y-4">
+             <Button className="w-full" size="lg" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" /> Upload Image
+            </Button>
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+            <div className="flex items-center gap-2">
+                <Label htmlFor="canvas-color" className="sr-only">Canvas Color</Label>
+                <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
+                <Button className="w-full" variant="secondary" onClick={handleNewCanvas}>
+                    <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
+                </Button>
+            </div>
+        </div>
+        <Separator/>
+        <Tabs defaultValue="ai" className="flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-2 mx-auto my-4 max-w-[calc(100%-2rem)]">
+                <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4"/> AI Tools</TabsTrigger>
+                <TabsTrigger value="editor"><Paintbrush className="mr-2 h-4 w-4"/> Editor</TabsTrigger>
+            </TabsList>
+             <ScrollArea className="flex-1">
+                <TabsContent value="ai" className="p-4 m-0">
+                     <div className="space-y-4">
+                      <h3 className="text-lg font-medium">AI Variations</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Generate unique variations of your icon using AI. Click a variation to start editing it.
+                      </p>
+                      <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} className="w-full">
+                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Generate Variations
+                      </Button>
+                      {variations.length > 0 && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
+                          {variations.map((v, i) => (
+                            <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
+                              <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="editor" className="p-4 m-0">
+                     <div className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-medium">Shapes & Text</h3>
+                             <p className="text-sm text-muted-foreground pb-4">
+                               Feature coming soon.
+                              </p>
+                            <div className="flex justify-start gap-2">
+                                <Button variant="outline" size="icon" disabled><Square /></Button>
+                                <Button variant="outline" size="icon" disabled><Circle /></Button>
+                                <Button variant="outline" size="icon" disabled><Type /></Button>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-medium">Colors & Gradients</h3>
+                             <p className="text-sm text-muted-foreground pb-4">
+                               Feature coming soon.
+                              </p>
+                            <div className="flex justify-start gap-2">
+                                <Button variant="outline" size="icon" disabled><Palette /></Button>
+                            </div>
+                        </div>
+                     </div>
+                </TabsContent>
+            </ScrollArea>
+        </Tabs>
+    </>
+)
+
+
 export default function Home() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -449,78 +548,6 @@ export default function Home() {
     });
   }
 
-    const ToolPanel = () => (
-        <>
-            <div className="p-4 space-y-4">
-                 <Button className="w-full" size="lg" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" /> Upload Image
-                </Button>
-                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                <div className="flex items-center gap-2">
-                    <Label htmlFor="canvas-color" className="sr-only">Canvas Color</Label>
-                    <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
-                    <Button className="w-full" variant="secondary" onClick={handleNewCanvas}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
-                    </Button>
-                </div>
-            </div>
-            <Separator/>
-            <Tabs defaultValue="ai" className="flex-1 flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 mx-auto my-4 max-w-[calc(100%-2rem)]">
-                    <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4"/> AI Tools</TabsTrigger>
-                    <TabsTrigger value="editor"><Paintbrush className="mr-2 h-4 w-4"/> Editor</TabsTrigger>
-                </TabsList>
-                 <ScrollArea className="flex-1">
-                    <TabsContent value="ai" className="p-4 m-0">
-                         <div className="space-y-4">
-                          <h3 className="text-lg font-medium">AI Variations</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Generate unique variations of your icon using AI. Click a variation to start editing it.
-                          </p>
-                          <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} className="w-full">
-                            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                            Generate Variations
-                          </Button>
-                          {variations.length > 0 && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
-                              {variations.map((v, i) => (
-                                <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
-                                  <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="editor" className="p-4 m-0">
-                         <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-medium">Shapes & Text</h3>
-                                 <p className="text-sm text-muted-foreground pb-4">
-                                   Feature coming soon.
-                                  </p>
-                                <div className="flex justify-start gap-2">
-                                    <Button variant="outline" size="icon" disabled><Square /></Button>
-                                    <Button variant="outline" size="icon" disabled><Circle /></Button>
-                                    <Button variant="outline" size="icon" disabled><Type /></Button>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-medium">Colors & Gradients</h3>
-                                 <p className="text-sm text-muted-foreground pb-4">
-                                   Feature coming soon.
-                                  </p>
-                                <div className="flex justify-start gap-2">
-                                    <Button variant="outline" size="icon" disabled><Palette /></Button>
-                                </div>
-                            </div>
-                         </div>
-                    </TabsContent>
-                </ScrollArea>
-            </Tabs>
-        </>
-    )
-
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
@@ -553,7 +580,20 @@ export default function Home() {
       <main className="flex-1 grid grid-cols-1 md:grid-cols-[400px_1fr] gap-0">
         {/* Left Panel: Tools (Desktop) */}
         <aside className="border-r border-border flex-col hidden md:flex">
-            <ToolPanel/>
+             <ToolPanel 
+                fileInputRef={fileInputRef}
+                handleImageUpload={handleImageUpload}
+                canvasColor={canvasColor}
+                setCanvasColor={setCanvasColor}
+                handleNewCanvas={handleNewCanvas}
+                onGenerateVariations={onGenerateVariations}
+                isPending={isPending}
+                faviconSrc={faviconSrc}
+                variations={variations}
+                setFaviconSrc={setFaviconSrc}
+                setGeneratedSizes={setGeneratedSizes}
+                setShowSizes={setShowSizes}
+            />
         </aside>
 
         {/* Right Panel: Canvas & Previews */}
@@ -640,7 +680,20 @@ export default function Home() {
                     </AccordionTrigger>
                     <AccordionContent>
                          <div className="max-h-[50vh] overflow-y-auto">
-                            <ToolPanel/>
+                             <ToolPanel 
+                                fileInputRef={fileInputRef}
+                                handleImageUpload={handleImageUpload}
+                                canvasColor={canvasColor}
+                                setCanvasColor={setCanvasColor}
+                                handleNewCanvas={handleNewCanvas}
+                                onGenerateVariations={onGenerateVariations}
+                                isPending={isPending}
+                                faviconSrc={faviconSrc}
+                                variations={variations}
+                                setFaviconSrc={setFaviconSrc}
+                                setGeneratedSizes={setGeneratedSizes}
+                                setShowSizes={setShowSizes}
+                            />
                          </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -659,5 +712,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
