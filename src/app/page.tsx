@@ -37,7 +37,7 @@ import {
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 512, 1024];
+const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
 
 
 interface GeneratedSize {
@@ -362,25 +362,30 @@ export default function Home() {
                 </Card>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl" style={{
-                    backgroundImage: `
-                      linear-gradient(45deg, #eee 25%, transparent 25%),
-                      linear-gradient(-45deg, #eee 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #eee 75%),
-                      linear-gradient(-45deg, transparent 75%, #eee 75%)`,
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    }}>
+                    <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+                        style={{
+                            backgroundImage: `
+                              linear-gradient(45deg, #eee 25%, transparent 25%),
+                              linear-gradient(-45deg, #eee 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #eee 75%),
+                              linear-gradient(-45deg, transparent 75%, #eee 75%)`,
+                            backgroundSize: '20px 20px',
+                            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                        }}
+                    >
                     {faviconSrc ? (
                       <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
                         <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
                         <h3 className="font-semibold text-lg">Create your icon</h3>
-                        <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Upload an image or start with a blank canvas from the tools.</p>
+                        <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Click here to upload an image or start with a blank canvas from the tools.</p>
                       </div>
                     )}
-                  </div>
+                  </button>
                 </div>
               )}
             </div>
