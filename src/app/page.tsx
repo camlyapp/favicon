@@ -37,7 +37,7 @@ import {
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const SIZES = [16, 32, 48, 64, 72, 96, 128, 144, 152, 180, 192, 196, 256, 512];
+const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 512, 1024];
 
 
 interface GeneratedSize {
@@ -80,12 +80,12 @@ export default function Home() {
 
   const handleNewCanvas = () => {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 1024;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, 1024, 1024);
     }
     const dataUrl = canvas.toDataURL();
     setFaviconSrc(dataUrl);
@@ -127,17 +127,26 @@ export default function Home() {
   };
 
   const resizeImage = (src: string, size: number): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = document.createElement('img');
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, size, size);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.src = src;
+      return new Promise((resolve, reject) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                // Ensure high-quality downscaling.
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, size, size);
+                resolve(canvas.toDataURL('image/png'));
+            } else {
+                reject(new Error('Could not get canvas context'));
+            }
+        };
+        img.onerror = () => {
+            reject(new Error('Failed to load image for resizing.'));
+        };
+        img.src = src;
     });
   };
 
@@ -151,18 +160,31 @@ export default function Home() {
       return;
     }
 
-    const resizedImages = await Promise.all(
-      SIZES.map(async (size) => {
-        const dataUrl = await resizeImage(faviconSrc, size);
-        return { size, dataUrl };
-      })
-    );
-    setGeneratedSizes(resizedImages);
-    setShowSizes(true);
-    toast({
-      title: 'Sizes Generated',
-      description: `Successfully generated ${SIZES.length} favicon sizes.`,
-    });
+    try {
+        // For best quality, we'll use a high-resolution version of the source image for resizing.
+        // If the source is smaller than 1024, we'll use its natural size.
+        const highResSrc = await resizeImage(faviconSrc, 1024);
+
+        const resizedImages = await Promise.all(
+          SIZES.map(async (size) => {
+            const dataUrl = await resizeImage(highResSrc, size);
+            return { size, dataUrl };
+          })
+        );
+        setGeneratedSizes(resizedImages);
+        setShowSizes(true);
+        toast({
+          title: 'Sizes Generated',
+          description: `Successfully generated ${SIZES.length} high-quality favicon sizes.`,
+        });
+    } catch (error) {
+        console.error("Error generating sizes:", error);
+        toast({
+            title: 'Error Generating Sizes',
+            description: 'Could not generate all icon sizes. Please try again.',
+            variant: 'destructive',
+        });
+    }
   };
 
   const downloadImage = (dataUrl: string, filename: string) => {
