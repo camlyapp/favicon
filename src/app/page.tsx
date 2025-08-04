@@ -1,8 +1,9 @@
 
 'use client';
 
-import React, { useState, useTransition, useRef } from 'react';
+import React, { useState, useTransition, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,20 +31,17 @@ import {
 import {
   Upload,
   RefreshCw,
-  Square,
-  Circle,
-  Type,
   Loader2,
   Sparkles,
   Download,
   Package,
   Paintbrush,
-  Palette,
   Eye,
   Settings,
   ChevronUp,
   X,
-  Copy
+  Copy,
+  Pencil
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -75,7 +73,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   isExportDialogOpen,
   setIsExportDialogOpen,
   faviconSrc,
-  generatedSizes,
   handleDownloadZip,
   getHtmlCode,
   copyToClipboard,
@@ -151,9 +148,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 const ToolPanel = ({
     fileInputRef,
     handleImageUpload,
-    canvasColor,
-    setCanvasColor,
-    handleNewCanvas,
     onGenerateVariations,
     isPending,
     faviconSrc,
@@ -161,13 +155,9 @@ const ToolPanel = ({
     setFaviconSrc,
     setGeneratedSizes,
     setShowSizes,
-    handleDrawShape,
 }: {
     fileInputRef: React.RefObject<HTMLInputElement>;
     handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    canvasColor: string;
-    setCanvasColor: (color: string) => void;
-    handleNewCanvas: () => void;
     onGenerateVariations: () => void;
     isPending: boolean;
     faviconSrc: string | null;
@@ -175,27 +165,17 @@ const ToolPanel = ({
     setFaviconSrc: (src: string) => void;
     setGeneratedSizes: (sizes: GeneratedSize[]) => void;
     setShowSizes: (show: boolean) => void;
-    handleDrawShape: (shape: 'square' | 'circle' | 'text') => void;
 }) => (
     <>
         <div className="p-4 space-y-4">
              <Button className="w-full" size="lg" onClick={() => fileInputRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" /> Upload Image
             </Button>
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-            <div className="flex items-center gap-2">
-                <Label htmlFor="canvas-color" className="sr-only">Canvas Color</Label>
-                <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
-                <Button className="w-full" variant="secondary" onClick={handleNewCanvas}>
-                    <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
-                </Button>
-            </div>
         </div>
         <Separator/>
         <Tabs defaultValue="ai" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-2 mx-auto my-4 max-w-[calc(100%-2rem)]">
+            <TabsList className="grid w-full grid-cols-1 mx-auto my-4 max-w-[calc(100%-2rem)]">
                 <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4"/> AI Tools</TabsTrigger>
-                <TabsTrigger value="editor"><Paintbrush className="mr-2 h-4 w-4"/> Editor</TabsTrigger>
             </TabsList>
              <ScrollArea className="flex-1">
                 <TabsContent value="ai" className="p-4 m-0">
@@ -219,30 +199,6 @@ const ToolPanel = ({
                       )}
                     </div>
                 </TabsContent>
-                <TabsContent value="editor" className="p-4 m-0">
-                     <div className="space-y-6">
-                        <div>
-                            <h3 className="text-lg font-medium">Shapes & Text</h3>
-                             <p className="text-sm text-muted-foreground pb-4">
-                               Click a button to add a basic shape or text to the canvas.
-                              </p>
-                            <div className="flex justify-start gap-2">
-                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={!faviconSrc}><Square /></Button>
-                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={!faviconSrc}><Circle /></Button>
-                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('text')} disabled={!faviconSrc}><Type /></Button>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-medium">Colors & Gradients</h3>
-                             <p className="text-sm text-muted-foreground pb-4">
-                               Feature coming soon.
-                              </p>
-                            <div className="flex justify-start gap-2">
-                                <Button variant="outline" size="icon" disabled><Palette /></Button>
-                            </div>
-                        </div>
-                     </div>
-                </TabsContent>
             </ScrollArea>
         </Tabs>
     </>
@@ -251,15 +207,25 @@ const ToolPanel = ({
 
 export default function Home() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [faviconSrc, setFaviconSrc] = useState<string | null>(null);
   const [variations, setVariations] = useState<string[]>([]);
   const [generatedSizes, setGeneratedSizes] = useState<GeneratedSize[]>([]);
-  const [canvasColor, setCanvasColor] = useState('#ffffff');
   const [showSizes, setShowSizes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
+  useEffect(() => {
+    const croppedImage = sessionStorage.getItem('croppedImage');
+    if (croppedImage) {
+      setFaviconSrc(croppedImage);
+      sessionStorage.removeItem('croppedImage'); // Clean up
+      setVariations([]);
+      setGeneratedSizes([]);
+      setShowSizes(false);
+    }
+  }, []);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -284,21 +250,14 @@ export default function Home() {
     }
   };
 
-  const handleNewCanvas = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, 1024, 1024);
+  const handleGoToEditor = () => {
+    if (!faviconSrc) {
+        toast({ title: "No image", description: "Please upload an image first.", variant: "destructive" });
+        return;
     }
-    const dataUrl = canvas.toDataURL();
-    setFaviconSrc(dataUrl);
-    setVariations([]);
-    setGeneratedSizes([]);
-    setShowSizes(false);
-  };
+    sessionStorage.setItem('faviconToEdit', faviconSrc);
+    router.push('/editor');
+  }
 
   const onGenerateVariations = () => {
     if (!faviconSrc) {
@@ -323,7 +282,7 @@ export default function Home() {
         });
       } else if (result.variations) {
         setVariations(result.variations);
-        setShowSizes(false);
+setShowSizes(false);
         toast({
           title: 'Success!',
           description: 'New favicon variations have been generated.',
@@ -353,49 +312,6 @@ export default function Home() {
         };
         img.src = src;
     });
-  };
-
-  const handleDrawShape = (shape: 'square' | 'circle' | 'text') => {
-    if (!faviconSrc) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = new window.Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, 1024, 1024);
-      ctx.fillStyle = '#6D28D9'; // A nice primary color
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 40;
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      if (shape === 'square') {
-        const size = canvas.width * 0.5;
-        ctx.fillRect(centerX - size / 2, centerY - size / 2, size, size);
-        ctx.strokeRect(centerX - size / 2, centerY - size / 2, size, size);
-      } else if (shape === 'circle') {
-        const radius = canvas.width * 0.25;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        ctx.fill();
-        ctx.stroke();
-      } else if (shape === 'text') {
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = 'bold 200px Inter, sans-serif';
-        ctx.fillText('Aa', centerX, centerY);
-        ctx.strokeText('Aa', centerX, centerY);
-      }
-
-      const dataUrl = canvas.toDataURL();
-      setFaviconSrc(dataUrl);
-    };
-    img.src = faviconSrc;
   };
 
   const handleGenerateAllSizes = async () => {
@@ -604,6 +520,10 @@ export default function Home() {
            <h1 className="text-xl font-bold sm:hidden">Forge</h1>
         </div>
         <div className="flex items-center gap-2">
+            <Button onClick={handleGoToEditor} disabled={!faviconSrc} variant="outline" size="sm">
+              <Pencil className="mr-0 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </Button>
             <Button onClick={handleGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
               <Eye className="mr-0 sm:mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Preview Sizes</span>
@@ -625,12 +545,9 @@ export default function Home() {
       <main className="flex-1 grid grid-cols-1 md:grid-cols-[400px_1fr] gap-0">
         {/* Left Panel: Tools (Desktop) */}
         <aside className="border-r border-border flex-col hidden md:flex">
-             <ToolPanel 
+             <ToolPanel
                 fileInputRef={fileInputRef}
                 handleImageUpload={handleImageUpload}
-                canvasColor={canvasColor}
-                setCanvasColor={setCanvasColor}
-                handleNewCanvas={handleNewCanvas}
                 onGenerateVariations={onGenerateVariations}
                 isPending={isPending}
                 faviconSrc={faviconSrc}
@@ -638,7 +555,6 @@ export default function Home() {
                 setFaviconSrc={setFaviconSrc}
                 setGeneratedSizes={setGeneratedSizes}
                 setShowSizes={setShowSizes}
-                handleDrawShape={handleDrawShape}
             />
         </aside>
 
@@ -683,10 +599,10 @@ export default function Home() {
                 </Card>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                    <button 
+                    <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none" 
+                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none"
                         style={{
                             backgroundImage: `
                               linear-gradient(45deg, #eee 25%, transparent 25%),
@@ -726,12 +642,9 @@ export default function Home() {
                     </AccordionTrigger>
                     <AccordionContent>
                          <div className="max-h-[50vh] overflow-y-auto">
-                             <ToolPanel 
+                             <ToolPanel
                                 fileInputRef={fileInputRef}
                                 handleImageUpload={handleImageUpload}
-                                canvasColor={canvasColor}
-                                setCanvasColor={setCanvasColor}
-                                handleNewCanvas={handleNewCanvas}
                                 onGenerateVariations={onGenerateVariations}
                                 isPending={isPending}
                                 faviconSrc={faviconSrc}
@@ -739,7 +652,6 @@ export default function Home() {
                                 setFaviconSrc={setFaviconSrc}
                                 setGeneratedSizes={setGeneratedSizes}
                                 setShowSizes={setShowSizes}
-                                handleDrawShape={handleDrawShape}
                             />
                          </div>
                     </AccordionContent>
