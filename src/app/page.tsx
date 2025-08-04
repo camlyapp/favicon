@@ -187,7 +187,7 @@ const ToolPanel = ({
                         Generate Variations
                       </Button>
                       {variations.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
+                        <div className="grid grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
                           {variations.map((v, i) => (
                             <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
                               <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
@@ -552,7 +552,7 @@ setShowSizes(false);
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[400px_1fr] gap-0">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr] gap-0">
         {/* Left Panel: Tools (Desktop) */}
         <aside className="border-r border-border flex-col hidden md:flex">
              <ToolPanel
@@ -569,7 +569,7 @@ setShowSizes(false);
 
         {/* Right Panel: Canvas & Previews */}
         <div className="flex flex-col bg-muted/20 relative">
-             <div className="flex-1 flex flex-col p-4 sm:p-8">
+             <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
                  <Card className="flex-1 flex flex-col">
                     <CardHeader className="flex-row items-center justify-between">
@@ -583,10 +583,10 @@ setShowSizes(false);
                     </CardHeader>
                     <CardContent className="flex-1">
                         <ScrollArea className="h-full">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
+                            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
-                                  <div className="w-20 h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
+                                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
                                     <Image src={dataUrl} alt={`Favicon ${size}x${size}`} width={size} height={size} className="object-contain" />
                                   </div>
                                   <span className="text-xs font-medium">{size}x{size}</span>
@@ -627,7 +627,7 @@ setShowSizes(false);
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
                         <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
-                        <h3 className="font-semibold text-lg">Create your icon</h3>
+                        <h3 className="font-semibold text-lg sm:text-xl">Create your icon</h3>
                         <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Click here to upload an image or start with a blank canvas from the tools.</p>
                       </div>
                     )}

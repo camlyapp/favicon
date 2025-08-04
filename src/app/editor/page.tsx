@@ -76,14 +76,26 @@ export default function EditorPage() {
                  const size = Math.min(container.clientWidth, container.clientHeight, 512);
                  canvas.width = size;
                  canvas.height = size;
-                 ctx.fillStyle = '#FFFFFF';
+                 ctx.fillStyle = canvasColor;
                  ctx.fillRect(0,0,size,size);
                  ctx.drawImage(img, 0, 0, size, size);
+                 
+                 // After drawing, if we are not cropping, set a default crop rect for later
+                 if (!isCropping) {
+                    const initialSize = Math.min(canvas.width, canvas.height) * 0.8;
+                    setCropRect({
+                        x: (canvas.width - initialSize) / 2,
+                        y: (canvas.height - initialSize) / 2,
+                        width: initialSize,
+                        height: initialSize,
+                    });
+                 }
             }
         };
         img.src = faviconSrc;
     }
-  }, [faviconSrc]);
+  }, [faviconSrc, canvasColor]);
+
 
   const handleSave = () => {
     if (canvasRef.current) {
@@ -99,10 +111,11 @@ export default function EditorPage() {
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      canvas.width = 512;
-      canvas.height = 512;
+      const size = Math.min(canvas.parentElement?.clientWidth || 512, 512);
+      canvas.width = size;
+      canvas.height = size;
       ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, size, size);
       const dataUrl = canvas.toDataURL();
       setFaviconSrc(dataUrl);
     }
@@ -145,9 +158,13 @@ export default function EditorPage() {
   };
   
     const getHandleAt = (e: MouseEvent<HTMLDivElement>) => {
+        if (!canvasRef.current) return null;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
         const { x, y, width, height } = cropRect;
-        const mouseX = e.nativeEvent.offsetX;
-        const mouseY = e.nativeEvent.offsetY;
         const handleSize = 10;
 
         if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 'tl';
@@ -166,76 +183,77 @@ export default function EditorPage() {
     };
 
     const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-        if (!isCropping) return;
+        if (!isCropping || !canvasRef.current) return;
         const handle = getHandleAt(e);
         if (handle) {
             setIsDragging(true);
             setResizeHandle(handle);
-            setDragStart({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+            const rect = canvasRef.current.getBoundingClientRect();
+            setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
         }
     };
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-        if (!isDragging || !isCropping || !resizeHandle) return;
+        if (!isDragging || !isCropping || !resizeHandle || !canvasRef.current) return;
         
-        const dx = e.nativeEvent.offsetX - dragStart.x;
-        const dy = e.nativeEvent.offsetY - dragStart.y;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const dx = mouseX - dragStart.x;
+        const dy = mouseY - dragStart.y;
         
         let newRect = { ...cropRect };
         
-        switch (resizeHandle) {
-            case 'tl':
-                newRect.x += dx;
-                newRect.y += dy;
-                newRect.width -= dx;
-                newRect.height -= dy;
-                break;
-            case 'tr':
-                newRect.y += dy;
-                newRect.width += dx;
-                newRect.height -= dy;
-                break;
-            case 'bl':
-                newRect.x += dx;
-                newRect.width -= dx;
-                newRect.height += dy;
-                break;
-            case 'br':
-                newRect.width += dx;
-                newRect.height += dy;
-                break;
-            case 't':
-                newRect.y += dy;
-                newRect.height -= dy;
-                break;
-            case 'b':
-                newRect.height += dy;
-                break;
-            case 'l':
-                newRect.x += dx;
-                newRect.width -= dx;
-                break;
-            case 'r':
-                newRect.width += dx;
-                break;
-            case 'move':
-                newRect.x += dx;
-                newRect.y += dy;
-                break;
+        if (resizeHandle.includes('l')) {
+            newRect.x += dx;
+            newRect.width -= dx;
+        }
+        if (resizeHandle.includes('r')) {
+            newRect.width += dx;
+        }
+        if (resizeHandle.includes('t')) {
+            newRect.y += dy;
+            newRect.height -= dy;
+        }
+        if (resizeHandle.includes('b')) {
+            newRect.height += dy;
+        }
+        if (resizeHandle === 'move') {
+            newRect.x += dx;
+            newRect.y += dy;
         }
 
-        const canvas = canvasRef.current;
-        if (canvas) {
-            if (newRect.width < 20) newRect.width = 20;
-            if (newRect.height < 20) newRect.height = 20;
-            if (newRect.x < 0) newRect.x = 0;
-            if (newRect.y < 0) newRect.y = 0;
-            if (newRect.x + newRect.width > canvas.width) newRect.x = canvas.width - newRect.width;
-            if (newRect.y + newRect.height > canvas.height) newRect.y = canvas.height - newRect.height;
+        if (newRect.width < 20) {
+            newRect.width = 20;
+            if (resizeHandle.includes('l')) newRect.x = cropRect.x + cropRect.width - 20;
+        }
+        if (newRect.height < 20) {
+            newRect.height = 20;
+            if (resizeHandle.includes('t')) newRect.y = cropRect.y + cropRect.height - 20;
+        }
+
+        if (newRect.x < 0) {
+            if(resizeHandle.includes('l')) newRect.width += newRect.x;
+            newRect.x = 0;
+        }
+        if (newRect.y < 0) {
+            if(resizeHandle.includes('t')) newRect.height += newRect.y;
+            newRect.y = 0;
+        }
+
+        if (newRect.x + newRect.width > canvas.width) {
+           newRect.width = canvas.width - newRect.x;
+           if (resizeHandle === 'move') newRect.x = canvas.width - newRect.width;
+        }
+        if (newRect.y + newRect.height > canvas.height) {
+           newRect.height = canvas.height - newRect.y;
+           if (resizeHandle === 'move') newRect.y = canvas.height - newRect.height;
         }
 
         setCropRect(newRect);
-        setDragStart({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+        setDragStart({ x: mouseX, y: mouseY });
     };
 
     const handleMouseUp = () => {
@@ -266,9 +284,11 @@ export default function EditorPage() {
             mainImg.onload = () => {
               const mainCtx = canvas.getContext('2d');
               if (mainCtx) {
-                canvas.width = mainImg.width;
-                canvas.height = mainImg.height;
-                mainCtx.drawImage(mainImg, 0, 0);
+                const container = canvasContainerRef.current;
+                const size = Math.min(container?.clientWidth || 512, container?.clientHeight || 512, 512);
+                canvas.width = size;
+                canvas.height = size;
+                mainCtx.drawImage(mainImg, 0, 0, size, size);
               }
             }
             mainImg.src = dataUrl;
@@ -317,6 +337,7 @@ export default function EditorPage() {
           ref={canvasContainerRef}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
             <div className="relative aspect-square w-full max-w-[600px] bg-white shadow-2xl rounded-2xl"
                  style={{
@@ -327,9 +348,9 @@ export default function EditorPage() {
                       linear-gradient(-45deg, transparent 75%, #eee 75%)`,
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                    cursor: isDragging ? 'grabbing' : isCropping ? 'crosshair' : 'default',
                 }}
                 onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
             >
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
                   {isCropping && (
@@ -344,13 +365,12 @@ export default function EditorPage() {
                           }}
                       />
                       {/* Border */}
-                      <div className="absolute border-2 border-dashed border-white"
+                      <div className="absolute border-2 border-dashed border-white pointer-events-none"
                           style={{
                               left: cropRect.x,
                               top: cropRect.y,
                               width: cropRect.width,
                               height: cropRect.height,
-                              cursor: isDragging && resizeHandle === 'move' ? 'grabbing' : 'move'
                           }}
                       />
                       {/* Handles */}
@@ -368,7 +388,7 @@ export default function EditorPage() {
             </div>
         </div>
 
-        <aside className="border-l border-border flex flex-col p-4 space-y-6">
+        <aside className="border-l border-border flex flex-col p-4 space-y-6 overflow-y-auto">
             <div>
                 <Label>Canvas</Label>
                 <div className="flex items-center gap-2 mt-2">
