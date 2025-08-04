@@ -32,6 +32,7 @@ import {
   Eye,
   Settings,
   ChevronUp,
+  X,
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -51,6 +52,7 @@ export default function Home() {
   const [variations, setVariations] = useState<string[]>([]);
   const [generatedSizes, setGeneratedSizes] = useState<GeneratedSize[]>([]);
   const [canvasColor, setCanvasColor] = useState('#ffffff');
+  const [showSizes, setShowSizes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +72,7 @@ export default function Home() {
         setFaviconSrc(result);
         setVariations([]);
         setGeneratedSizes([]);
+        setShowSizes(false);
       };
       reader.readAsDataURL(file);
     }
@@ -88,6 +91,7 @@ export default function Home() {
     setFaviconSrc(dataUrl);
     setVariations([]);
     setGeneratedSizes([]);
+    setShowSizes(false);
   };
 
   const onGenerateVariations = () => {
@@ -113,6 +117,7 @@ export default function Home() {
         });
       } else if (result.variations) {
         setVariations(result.variations);
+        setShowSizes(false);
         toast({
           title: 'Success!',
           description: 'New favicon variations have been generated.',
@@ -153,6 +158,7 @@ export default function Home() {
       })
     );
     setGeneratedSizes(resizedImages);
+    setShowSizes(true);
     toast({
       title: 'Sizes Generated',
       description: `Successfully generated ${SIZES.length} favicon sizes.`,
@@ -228,7 +234,7 @@ export default function Home() {
                           {variations.length > 0 && (
                             <div className="grid grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
                               {variations.map((v, i) => (
-                                <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
+                                <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
                                   <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
                                 </button>
                               ))}
@@ -277,8 +283,8 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
             <Button onClick={handleGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
-              <Settings className="mr-0 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Generate Sizes</span>
+              <Eye className="mr-0 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Preview Sizes</span>
             </Button>
             <Button size="sm" onClick={handleDownloadZip} disabled={generatedSizes.length === 0}>
               <Package className="mr-0 sm:mr-2 h-4 w-4" />
@@ -293,45 +299,26 @@ export default function Home() {
             <ToolPanel/>
         </aside>
 
-        {/* Right Panel: Canvas & Preview */}
+        {/* Right Panel: Canvas & Previews */}
         <div className="flex flex-col bg-muted/20 relative">
-             <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
-              <div className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl" style={{
-                backgroundImage: `
-                  linear-gradient(45deg, #eee 25%, transparent 25%),
-                  linear-gradient(-45deg, #eee 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #eee 75%),
-                  linear-gradient(-45deg, transparent 75%, #eee 75%)`,
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-              }}>
-                {faviconSrc ? (
-                  <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
-                    <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
-                    <h3 className="font-semibold text-lg">Create your icon</h3>
-                    <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Upload an image or start with a blank canvas from the tools.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Previews */}
-            <div className="bg-background border-t p-2 sm:p-4">
-                <Card>
-                    <CardHeader>
+             <div className="flex-1 flex flex-col p-4 sm:p-8">
+              {showSizes && generatedSizes.length > 0 ? (
+                 <Card className="flex-1 flex flex-col">
+                    <CardHeader className="flex-row items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-                           <Eye className="w-5 h-5 sm:w-6 sm:h-6"/> Preview &amp; Export
+                           <Eye className="w-5 h-5 sm:w-6 sm:h-6"/> Previews
                         </CardTitle>
+                        <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)}>
+                            <X className="w-5 h-5"/>
+                            <span className="sr-only">Close Previews</span>
+                        </Button>
                     </CardHeader>
-                    <CardContent>
-                       {generatedSizes.length > 0 ? (
-                        <ScrollArea className="h-48">
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 gap-4 pr-4">
+                    <CardContent className="flex-1">
+                        <ScrollArea className="h-full">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
-                                  <div className="w-16 h-16 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
+                                  <div className="w-20 h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
                                     <Image src={dataUrl} alt={`Favicon ${size}x${size}`} width={size} height={size} className="object-contain" />
                                   </div>
                                   <span className="text-xs font-medium">{size}x{size}</span>
@@ -343,24 +330,39 @@ export default function Home() {
                               ))}
                             </div>
                         </ScrollArea>
-                        ) : (
-                           <div className="h-48 flex flex-col items-center justify-center text-center text-muted-foreground p-4 bg-secondary/50 rounded-lg">
-                              <Package className="w-10 h-10 mb-2 text-muted-foreground/50" />
-                              <p className="font-medium">Generate all sizes for preview</p>
-                              <p className="text-sm max-w-xs">Click the "Generate Sizes" button to create favicons for all standard dimensions.</p>
-                            </div>
-                        )}
                     </CardContent>
-                     {generatedSizes.length > 0 && (
-                        <CardFooter>
-                             <Button className="w-full" size="lg" onClick={handleDownloadZip}>
-                              <Package className="mr-2 h-4 w-4" />
-                              Export All as .ZIP
-                            </Button>
-                        </CardFooter>
-                    )}
+                    <CardFooter>
+                         <Button className="w-full" size="lg" onClick={handleDownloadZip}>
+                          <Package className="mr-2 h-4 w-4" />
+                          Export All as .ZIP
+                        </Button>
+                    </CardFooter>
                 </Card>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl" style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, #eee 25%, transparent 25%),
+                      linear-gradient(-45deg, #eee 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #eee 75%),
+                      linear-gradient(-45deg, transparent 75%, #eee 75%)`,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                    }}>
+                    {faviconSrc ? (
+                      <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
+                        <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
+                        <h3 className="font-semibold text-lg">Create your icon</h3>
+                        <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Upload an image or start with a blank canvas from the tools.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
              {/* Bottom Tools Panel (Mobile) */}
              <div className="md:hidden sticky bottom-0 bg-background border-t z-10">
                  <Accordion type="single" collapsible className="w-full">
@@ -369,7 +371,7 @@ export default function Home() {
                         <div className="flex items-center gap-2 text-lg font-semibold">
                             <Settings className="w-6 h-6"/>
                             <span>Tools</span>
-                            <ChevronUp className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                            <ChevronUp className="h-4 w-4 shrink-0 transition-transform duration-200 accordion-chevron" />
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -382,7 +384,14 @@ export default function Home() {
             </div>
         </div>
       </main>
+      <style jsx>{`
+        .accordion-chevron {
+            transition: transform 0.2s ease-in-out;
+        }
+        [data-state=open] .accordion-chevron {
+            transform: rotate(180deg);
+        }
+      `}</style>
     </div>
   );
 }
-
