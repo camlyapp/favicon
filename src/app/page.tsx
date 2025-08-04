@@ -104,7 +104,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           </TabsList>
           <TabsContent value="zip" className="py-4">
               <div className="flex flex-col items-center justify-center space-y-4 p-8 bg-secondary/50 rounded-lg">
-                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a \`favicon.ico\` file, and \`site.webmanifest\` in a single .zip file.</p>
+                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, and `site.webmanifest` in a single .zip file.</p>
                    <Button size="lg" onClick={handleDownloadZip}>
                         <Package className="mr-2 h-4 w-4" />
                         Download .ZIP
@@ -113,7 +113,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           </TabsContent>
           <TabsContent value="html" className="py-4">
                <div className="space-y-4">
-                   <p className="text-sm text-muted-foreground">Copy and paste this code into the \`<head>\` of your HTML document.</p>
+                   <p className="text-sm text-muted-foreground">Copy and paste this code into the `&lt;head&gt;` of your HTML document.</p>
                   <div className="relative">
                       <Textarea readOnly value={getHtmlCode()} className="h-40 font-mono text-xs bg-muted/50" />
                       <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getHtmlCode())}>
@@ -124,7 +124,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           </TabsContent>
           <TabsContent value="manifest" className="py-4">
                <div className="space-y-4">
-                   <p className="text-sm text-muted-foreground">This is the content for your \`site.webmanifest\` file.</p>
+                   <p className="text-sm text-muted-foreground">This is the content for your `site.webmanifest` file.</p>
                    <div className="relative">
                       <Textarea readOnly value={getWebmanifestContent()} className="h-64 font-mono text-xs bg-muted/50" />
                       <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getWebmanifestContent())}>
@@ -146,7 +146,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       </DialogFooter>
     </DialogContent>
   </Dialog>
-)
+);
 
 export default function Home() {
   const { toast } = useToast();
