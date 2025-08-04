@@ -12,6 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { handleGenerateVariations } from '@/app/actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+    DialogClose
+} from "@/components/ui/dialog";
+import {
     Accordion,
     AccordionContent,
     AccordionItem,
@@ -33,9 +43,12 @@ import {
   Settings,
   ChevronUp,
   X,
+  Copy
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+
 
 const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
 
@@ -44,6 +57,96 @@ interface GeneratedSize {
   size: number;
   dataUrl: string;
 }
+
+interface ExportDialogProps {
+  isExportDialogOpen: boolean;
+  setIsExportDialogOpen: (isOpen: boolean) => void;
+  faviconSrc: string | null;
+  generatedSizes: GeneratedSize[];
+  handleDownloadZip: () => void;
+  getHtmlCode: () => string;
+  copyToClipboard: (text: string) => void;
+  getWebmanifestContent: () => string;
+  handleDownloadIco: () => void;
+}
+
+
+const ExportDialog: React.FC<ExportDialogProps> = ({
+  isExportDialogOpen,
+  setIsExportDialogOpen,
+  faviconSrc,
+  generatedSizes,
+  handleDownloadZip,
+  getHtmlCode,
+  copyToClipboard,
+  getWebmanifestContent,
+  handleDownloadIco
+}) => (
+   <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+    <DialogTrigger asChild>
+        <Button size="sm" disabled={!faviconSrc}>
+            <Package className="mr-0 sm:mr-2 h-4 w-4" />
+             <span className="hidden sm:inline">Export All</span>
+          </Button>
+    </DialogTrigger>
+    <DialogContent className="sm:max-w-[625px]">
+      <DialogHeader>
+        <DialogTitle>Export Options</DialogTitle>
+        <DialogDescription>
+          Download your favicons and get the code to add them to your site.
+        </DialogDescription>
+      </DialogHeader>
+       <Tabs defaultValue="zip">
+          <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="zip">Download .ZIP</TabsTrigger>
+              <TabsTrigger value="html">HTML Code</TabsTrigger>
+              <TabsTrigger value="manifest">Web Manifest</TabsTrigger>
+          </TabsList>
+          <TabsContent value="zip" className="py-4">
+              <div className="flex flex-col items-center justify-center space-y-4 p-8 bg-secondary/50 rounded-lg">
+                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a \`favicon.ico\` file, and \`site.webmanifest\` in a single .zip file.</p>
+                   <Button size="lg" onClick={handleDownloadZip}>
+                        <Package className="mr-2 h-4 w-4" />
+                        Download .ZIP
+                      </Button>
+              </div>
+          </TabsContent>
+          <TabsContent value="html" className="py-4">
+               <div className="space-y-4">
+                   <p className="text-sm text-muted-foreground">Copy and paste this code into the \`<head>\` of your HTML document.</p>
+                  <div className="relative">
+                      <Textarea readOnly value={getHtmlCode()} className="h-40 font-mono text-xs bg-muted/50" />
+                      <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getHtmlCode())}>
+                          <Copy className="h-4 w-4"/>
+                      </Button>
+                  </div>
+               </div>
+          </TabsContent>
+          <TabsContent value="manifest" className="py-4">
+               <div className="space-y-4">
+                   <p className="text-sm text-muted-foreground">This is the content for your \`site.webmanifest\` file.</p>
+                   <div className="relative">
+                      <Textarea readOnly value={getWebmanifestContent()} className="h-64 font-mono text-xs bg-muted/50" />
+                      <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getWebmanifestContent())}>
+                          <Copy className="h-4 w-4"/>
+                      </Button>
+                   </div>
+               </div>
+          </TabsContent>
+      </Tabs>
+      <DialogFooter>
+          <Button variant="secondary" onClick={handleDownloadIco} disabled={!generatedSizes.some(s => s.size === 32) && !faviconSrc}>
+              <Download className="mr-2 h-4 w-4" /> Download favicon.ico
+          </Button>
+          <DialogClose asChild>
+               <Button type="button" variant="outline">
+                  Close
+              </Button>
+          </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+)
 
 export default function Home() {
   const { toast } = useToast();
@@ -54,6 +157,8 @@ export default function Home() {
   const [canvasColor, setCanvasColor] = useState('#ffffff');
   const [showSizes, setShowSizes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -135,7 +240,6 @@ export default function Home() {
             canvas.height = size;
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                // Ensure high-quality downscaling.
                 ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, size, size);
                 resolve(canvas.toDataURL('image/png'));
@@ -161,8 +265,6 @@ export default function Home() {
     }
 
     try {
-        // For best quality, we'll use a high-resolution version of the source image for resizing.
-        // If the source is smaller than 1024, we'll use its natural size.
         const highResSrc = await resizeImage(faviconSrc, 1024);
 
         const resizedImages = await Promise.all(
@@ -195,22 +297,48 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
   };
+
+   const handleDownloadIco = async () => {
+    const size32 = generatedSizes.find(s => s.size === 32)?.dataUrl || (await resizeImage(faviconSrc!, 32));
+    if (!size32) {
+      toast({ title: "Error", description: "Could not generate 32x32 icon for .ico file.", variant: "destructive" });
+      return;
+    }
+    downloadImage(size32, 'favicon.ico');
+    toast({ title: "Downloaded", description: "favicon.ico has been downloaded." });
+  };
   
   const handleDownloadZip = async () => {
     if (generatedSizes.length === 0) {
-      toast({
-        title: 'No sizes generated',
-        description: 'Please generate the sizes before exporting.',
-        variant: 'destructive',
-      });
-      return;
+       await handleGenerateAllSizes();
     }
 
+    if (generatedSizes.length === 0) {
+        toast({
+            title: 'No sizes generated',
+            description: 'Could not generate sizes for the zip file. Please try generating them manually first.',
+            variant: 'destructive'
+        });
+        return;
+    }
+
+
     const zip = new JSZip();
+    const folder = zip.folder('favicons');
+
     generatedSizes.forEach(({ size, dataUrl }) => {
       const base64Data = dataUrl.split(',')[1];
-      zip.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
+      folder!.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
     });
+    
+    const icoUrl = generatedSizes.find(s => s.size === 32)?.dataUrl;
+    if (icoUrl) {
+      const base64Data = icoUrl.split(',')[1];
+      folder!.file(`favicon.ico`, base64Data, { base64: true });
+    }
+
+    folder!.file('site.webmanifest', getWebmanifestContent());
+
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
@@ -220,6 +348,44 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const getHtmlCode = () => {
+    return `
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+    `.trim();
+  }
+
+  const getWebmanifestContent = () => {
+    return JSON.stringify({
+        "name": "My Awesome App",
+        "short_name": "AwesomeApp",
+        "icons": [
+            {
+                "src": "/android-chrome-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "/android-chrome-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ],
+        "theme_color": "#ffffff",
+        "background_color": "#ffffff",
+        "display": "standalone"
+    }, null, 2);
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: "Copied to clipboard!",
+    });
+  }
 
     const ToolPanel = () => (
         <>
@@ -308,10 +474,17 @@ export default function Home() {
               <Eye className="mr-0 sm:mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Preview Sizes</span>
             </Button>
-            <Button size="sm" onClick={handleDownloadZip} disabled={generatedSizes.length === 0}>
-              <Package className="mr-0 sm:mr-2 h-4 w-4" />
-               <span className="hidden sm:inline">Export All</span>
-            </Button>
+            <ExportDialog
+                isExportDialogOpen={isExportDialogOpen}
+                setIsExportDialogOpen={setIsExportDialogOpen}
+                faviconSrc={faviconSrc}
+                generatedSizes={generatedSizes}
+                handleDownloadZip={handleDownloadZip}
+                getHtmlCode={getHtmlCode}
+                copyToClipboard={copyToClipboard}
+                getWebmanifestContent={getWebmanifestContent}
+                handleDownloadIco={handleDownloadIco}
+            />
         </div>
       </header>
 
@@ -354,9 +527,9 @@ export default function Home() {
                         </ScrollArea>
                     </CardContent>
                     <CardFooter>
-                         <Button className="w-full" size="lg" onClick={handleDownloadZip}>
+                         <Button className="w-full" size="lg" onClick={() => setIsExportDialogOpen(true)}>
                           <Package className="mr-2 h-4 w-4" />
-                          Export All as .ZIP
+                          Export All
                         </Button>
                     </CardFooter>
                 </Card>
