@@ -161,6 +161,7 @@ const ToolPanel = ({
     setFaviconSrc,
     setGeneratedSizes,
     setShowSizes,
+    handleDrawShape,
 }: {
     fileInputRef: React.RefObject<HTMLInputElement>;
     handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -174,6 +175,7 @@ const ToolPanel = ({
     setFaviconSrc: (src: string) => void;
     setGeneratedSizes: (sizes: GeneratedSize[]) => void;
     setShowSizes: (show: boolean) => void;
+    handleDrawShape: (shape: 'square' | 'circle' | 'text') => void;
 }) => (
     <>
         <div className="p-4 space-y-4">
@@ -222,12 +224,12 @@ const ToolPanel = ({
                         <div>
                             <h3 className="text-lg font-medium">Shapes & Text</h3>
                              <p className="text-sm text-muted-foreground pb-4">
-                               Feature coming soon.
+                               Click a button to add a basic shape or text to the canvas.
                               </p>
                             <div className="flex justify-start gap-2">
-                                <Button variant="outline" size="icon" disabled><Square /></Button>
-                                <Button variant="outline" size="icon" disabled><Circle /></Button>
-                                <Button variant="outline" size="icon" disabled><Type /></Button>
+                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={!faviconSrc}><Square /></Button>
+                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={!faviconSrc}><Circle /></Button>
+                                <Button variant="outline" size="icon" onClick={() => handleDrawShape('text')} disabled={!faviconSrc}><Type /></Button>
                             </div>
                         </div>
                         <div>
@@ -351,6 +353,49 @@ export default function Home() {
         };
         img.src = src;
     });
+  };
+
+  const handleDrawShape = (shape: 'square' | 'circle' | 'text') => {
+    if (!faviconSrc) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, 1024, 1024);
+      ctx.fillStyle = '#6D28D9'; // A nice primary color
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 40;
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      if (shape === 'square') {
+        const size = canvas.width * 0.5;
+        ctx.fillRect(centerX - size / 2, centerY - size / 2, size, size);
+        ctx.strokeRect(centerX - size / 2, centerY - size / 2, size, size);
+      } else if (shape === 'circle') {
+        const radius = canvas.width * 0.25;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+        ctx.fill();
+        ctx.stroke();
+      } else if (shape === 'text') {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 200px Inter, sans-serif';
+        ctx.fillText('Aa', centerX, centerY);
+        ctx.strokeText('Aa', centerX, centerY);
+      }
+
+      const dataUrl = canvas.toDataURL();
+      setFaviconSrc(dataUrl);
+    };
+    img.src = faviconSrc;
   };
 
   const handleGenerateAllSizes = async () => {
@@ -593,6 +638,7 @@ export default function Home() {
                 setFaviconSrc={setFaviconSrc}
                 setGeneratedSizes={setGeneratedSizes}
                 setShowSizes={setShowSizes}
+                handleDrawShape={handleDrawShape}
             />
         </aside>
 
@@ -693,6 +739,7 @@ export default function Home() {
                                 setFaviconSrc={setFaviconSrc}
                                 setGeneratedSizes={setGeneratedSizes}
                                 setShowSizes={setShowSizes}
+                                handleDrawShape={handleDrawShape}
                             />
                          </div>
                     </AccordionContent>
