@@ -104,7 +104,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           </TabsList>
           <TabsContent value="zip" className="py-4">
               <div className="flex flex-col items-center justify-center space-y-4 p-8 bg-secondary/50 rounded-lg">
-                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, and `site.webmanifest` in a single .zip file.</p>
+                  <p className="text-center text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, `site.webmanifest`, and an example `index.html` in a single .zip file.</p>
                    <Button size="lg" onClick={handleDownloadZip}>
                         <Package className="mr-2 h-4 w-4" />
                         Download .ZIP
@@ -309,11 +309,38 @@ export default function Home() {
   };
   
   const handleDownloadZip = async () => {
+    // Ensure sizes are generated before zipping
     if (generatedSizes.length === 0) {
        await handleGenerateAllSizes();
+       // handleGenerateAllSizes is async and updates state. We need to wait for the next render cycle.
+       // A simple but effective way is a short timeout.
+       await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // After attempting to generate, check again if sizes are available.
+    // The state update from handleGenerateAllSizes might not be reflected immediately, so we pass the freshly generated sizes.
+    let currentGeneratedSizes = generatedSizes;
+    if (currentGeneratedSizes.length === 0 && faviconSrc) {
+        try {
+            const highResSrc = await resizeImage(faviconSrc, 1024);
+            currentGeneratedSizes = await Promise.all(
+                SIZES.map(async (size) => {
+                    const dataUrl = await resizeImage(highResSrc, size);
+                    return { size, dataUrl };
+                })
+            );
+        } catch (error) {
+             toast({
+                title: 'Error Generating Sizes',
+                description: 'Could not generate sizes for the zip file.',
+                variant: 'destructive'
+            });
+            return;
+        }
     }
 
-    if (generatedSizes.length === 0) {
+
+    if (currentGeneratedSizes.length === 0) {
         toast({
             title: 'No sizes generated',
             description: 'Could not generate sizes for the zip file. Please try generating them manually first.',
@@ -324,26 +351,35 @@ export default function Home() {
 
 
     const zip = new JSZip();
-    const folder = zip.folder('favicons');
 
-    generatedSizes.forEach(({ size, dataUrl }) => {
+    currentGeneratedSizes.forEach(({ size, dataUrl }) => {
       const base64Data = dataUrl.split(',')[1];
-      folder!.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
+       if(size === 180) {
+          zip.file(`apple-touch-icon.png`, base64Data, { base64: true });
+       }
+       if (size === 192) {
+          zip.file(`android-chrome-192x192.png`, base64Data, { base64: true });
+       }
+       if (size === 512) {
+          zip.file(`android-chrome-512x512.png`, base64Data, { base64: true });
+       }
+      zip.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
     });
     
-    const icoUrl = generatedSizes.find(s => s.size === 32)?.dataUrl;
+    const icoUrl = currentGeneratedSizes.find(s => s.size === 32)?.dataUrl;
     if (icoUrl) {
       const base64Data = icoUrl.split(',')[1];
-      folder!.file(`favicon.ico`, base64Data, { base64: true });
+      zip.file(`favicon.ico`, base64Data, { base64: true });
     }
 
-    folder!.file('site.webmanifest', getWebmanifestContent());
+    zip.file('site.webmanifest', getWebmanifestContent());
+    zip.file('index.html', getFullHtmlPage());
 
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(zipBlob);
-    link.download = 'favicons.zip';
+    link.download = 'favicon_package.zip';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -357,6 +393,24 @@ export default function Home() {
 <link rel="manifest" href="/site.webmanifest">
     `.trim();
   }
+
+  const getFullHtmlPage = () => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Awesome App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  ${getHtmlCode()}
+</head>
+<body>
+  <h1>Favicon Test Page</h1>
+  <p>Your new favicons should be visible in the browser tab!</p>
+</body>
+</html>
+    `.trim();
+  };
 
   const getWebmanifestContent = () => {
     return JSON.stringify({
