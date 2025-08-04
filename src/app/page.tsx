@@ -135,7 +135,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           </TabsContent>
       </Tabs>
       <DialogFooter>
-          <Button variant="secondary" onClick={handleDownloadIco} disabled={!generatedSizes.some(s => s.size === 32) && !faviconSrc}>
+          <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc}>
               <Download className="mr-2 h-4 w-4" /> Download favicon.ico
           </Button>
           <DialogClose asChild>
@@ -299,13 +299,17 @@ export default function Home() {
   };
 
    const handleDownloadIco = async () => {
-    const size32 = generatedSizes.find(s => s.size === 32)?.dataUrl || (await resizeImage(faviconSrc!, 32));
-    if (!size32) {
-      toast({ title: "Error", description: "Could not generate 32x32 icon for .ico file.", variant: "destructive" });
+    if (!faviconSrc) {
+      toast({ title: "No image", description: "Please create or upload an image first.", variant: "destructive" });
       return;
     }
-    downloadImage(size32, 'favicon.ico');
-    toast({ title: "Downloaded", description: "favicon.ico has been downloaded." });
+    try {
+      const icoUrl = await resizeImage(faviconSrc, 32);
+      downloadImage(icoUrl, 'favicon.ico');
+      toast({ title: "Downloaded", description: "favicon.ico has been downloaded." });
+    } catch (error) {
+       toast({ title: "Error", description: "Could not generate favicon.ico.", variant: "destructive" });
+    }
   };
   
   const handleDownloadZip = async () => {
@@ -366,10 +370,14 @@ export default function Home() {
       zip.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
     });
     
-    const icoUrl = currentGeneratedSizes.find(s => s.size === 32)?.dataUrl;
-    if (icoUrl) {
-      const base64Data = icoUrl.split(',')[1];
-      zip.file(`favicon.ico`, base64Data, { base64: true });
+    if (faviconSrc) {
+        try {
+            const icoUrl = await resizeImage(faviconSrc, 32);
+            const base64Data = icoUrl.split(',')[1];
+            zip.file(`favicon.ico`, base64Data, { base64: true });
+        } catch (error) {
+            console.error("Could not generate favicon.ico for the zip file.");
+        }
     }
 
     zip.file('site.webmanifest', getWebmanifestContent());
