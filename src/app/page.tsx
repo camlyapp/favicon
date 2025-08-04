@@ -365,7 +365,7 @@ export default function Home() {
                     <button 
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background" 
+                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none" 
                         style={{
                             backgroundImage: `
                               linear-gradient(45deg, #eee 25%, transparent 25%),
