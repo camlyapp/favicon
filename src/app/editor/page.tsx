@@ -72,11 +72,13 @@ export default function EditorPage() {
         const img = new window.Image();
         img.onload = () => {
             const container = canvasContainerRef.current;
-            if (container) {
-                 const size = Math.min(container.clientWidth, container.clientHeight, img.width, img.height, 600);
+            if (container && ctx) {
+                 const size = Math.min(container.clientWidth, container.clientHeight, 512);
                  canvas.width = size;
                  canvas.height = size;
-                 ctx?.drawImage(img, 0, 0, size, size);
+                 ctx.fillStyle = '#FFFFFF';
+                 ctx.fillRect(0,0,size,size);
+                 ctx.drawImage(img, 0, 0, size, size);
             }
         };
         img.src = faviconSrc;
@@ -97,10 +99,10 @@ export default function EditorPage() {
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      canvas.width = 1024;
-      canvas.height = 1024;
+      canvas.width = 512;
+      canvas.height = 512;
       ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, 1024, 1024);
+      ctx.fillRect(0, 0, 512, 512);
       const dataUrl = canvas.toDataURL();
       setFaviconSrc(dataUrl);
     }
@@ -175,32 +177,61 @@ export default function EditorPage() {
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         if (!isDragging || !isCropping || !resizeHandle) return;
+        
         const dx = e.nativeEvent.offsetX - dragStart.x;
         const dy = e.nativeEvent.offsetY - dragStart.y;
+        
         let newRect = { ...cropRect };
-
+        
         switch (resizeHandle) {
-            case 'tl': newRect = { ...newRect, x: newRect.x + dx, y: newRect.y + dy, width: newRect.width - dx, height: newRect.height - dy }; break;
-            case 'tr': newRect = { ...newRect, y: newRect.y + dy, width: newRect.width + dx, height: newRect.height - dy }; break;
-            case 'bl': newRect = { ...newRect, x: newRect.x + dx, width: newRect.width - dx, height: newRect.height + dy }; break;
-            case 'br': newRect = { ...newRect, width: newRect.width + dx, height: newRect.height + dy }; break;
-            case 't': newRect = { ...newRect, y: newRect.y + dy, height: newRect.height - dy }; break;
-            case 'b': newRect = { ...newRect, height: newRect.height + dy }; break;
-            case 'l': newRect = { ...newRect, x: newRect.x + dx, width: newRect.width - dx }; break;
-            case 'r': newRect = { ...newRect, width: newRect.width + dx }; break;
-            case 'move': newRect = { ...newRect, x: newRect.x + dx, y: newRect.y + dy }; break;
+            case 'tl':
+                newRect.x += dx;
+                newRect.y += dy;
+                newRect.width -= dx;
+                newRect.height -= dy;
+                break;
+            case 'tr':
+                newRect.y += dy;
+                newRect.width += dx;
+                newRect.height -= dy;
+                break;
+            case 'bl':
+                newRect.x += dx;
+                newRect.width -= dx;
+                newRect.height += dy;
+                break;
+            case 'br':
+                newRect.width += dx;
+                newRect.height += dy;
+                break;
+            case 't':
+                newRect.y += dy;
+                newRect.height -= dy;
+                break;
+            case 'b':
+                newRect.height += dy;
+                break;
+            case 'l':
+                newRect.x += dx;
+                newRect.width -= dx;
+                break;
+            case 'r':
+                newRect.width += dx;
+                break;
+            case 'move':
+                newRect.x += dx;
+                newRect.y += dy;
+                break;
         }
 
-        // Add constraints if necessary
         const canvas = canvasRef.current;
         if (canvas) {
-            if (newRect.x < 0) newRect.x = 0;
-            if (newRect.y < 0) newRect.y = 0;
-            if (newRect.x + newRect.width > canvas.width) newRect.width = canvas.width - newRect.x;
-            if (newRect.y + newRect.height > canvas.height) newRect.height = canvas.height - newRect.y;
             if (newRect.width < 20) newRect.width = 20;
             if (newRect.height < 20) newRect.height = 20;
-
+            if (newRect.x < 0) newRect.x = 0;
+            if (newRect.y < 0) newRect.y = 0;
+            if (newRect.x + newRect.width > canvas.width) newRect.x = canvas.width - newRect.width;
+            if (newRect.y + newRect.height > canvas.height) newRect.y = canvas.height - newRect.height;
         }
 
         setCropRect(newRect);
@@ -229,6 +260,18 @@ export default function EditorPage() {
             newCtx.putImageData(imageData, 0, 0);
             const dataUrl = newCanvas.toDataURL('image/png');
             setFaviconSrc(dataUrl);
+            
+            // Re-draw the new image on the main canvas
+            const mainImg = new window.Image();
+            mainImg.onload = () => {
+              const mainCtx = canvas.getContext('2d');
+              if (mainCtx) {
+                canvas.width = mainImg.width;
+                canvas.height = mainImg.height;
+                mainCtx.drawImage(mainImg, 0, 0);
+              }
+            }
+            mainImg.src = dataUrl;
         }
         setIsCropping(false);
     };
@@ -237,7 +280,7 @@ export default function EditorPage() {
         setIsCropping(true);
         const canvas = canvasRef.current;
         if(canvas) {
-          const initialSize = Math.min(canvas.width, canvas.height) * 0.5;
+          const initialSize = Math.min(canvas.width, canvas.height) * 0.8;
            setCropRect({
             x: (canvas.width - initialSize) / 2,
             y: (canvas.height - initialSize) / 2,
@@ -294,14 +337,9 @@ export default function EditorPage() {
                       {/* Overlay */}
                       <div className="absolute top-0 left-0 w-full h-full bg-black/50"
                           style={{
-                              clipPath: `polygon(
-                                  0% 0%, 100% 0%, 100% 100%, 0% 100%,
-                                  0% ${cropRect.y}px,
-                                  ${cropRect.x}px ${cropRect.y}px,
-                                  ${cropRect.x}px ${cropRect.y + cropRect.height}px,
-                                  ${cropRect.x + cropRect.width}px ${cropRect.y + cropRect.height}px,
-                                  ${cropRect.x + cropRect.width}px ${cropRect.y}px,
-                                  0 ${cropRect.y}px
+                              clipPath: `evenodd(
+                                  M 0 0 H ${canvasRef.current?.width || 0} V ${canvasRef.current?.height || 0} H 0 Z
+                                  M ${cropRect.x} ${cropRect.y} H ${cropRect.x + cropRect.width} V ${cropRect.y + cropRect.height} H ${cropRect.x} Z
                               )`
                           }}
                       />
@@ -316,15 +354,15 @@ export default function EditorPage() {
                           }}
                       />
                       {/* Handles */}
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
 
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: cropRect.x + cropRect.width/2 - 6, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: cropRect.x + cropRect.width/2 - 6, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: cropRect.y + cropRect.height/2 - 6, cursor: 'ew-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: cropRect.y + cropRect.height/2 - 6, cursor: 'ew-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
                     </>
                   )}
             </div>
@@ -380,4 +418,3 @@ export default function EditorPage() {
     </div>
   );
 }
-
