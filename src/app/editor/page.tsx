@@ -94,7 +94,7 @@ export default function EditorPage() {
         };
         img.src = faviconSrc;
     }
-  }, [faviconSrc, canvasColor]);
+  }, [faviconSrc, canvasColor, isCropping]);
 
 
   const handleSave = () => {
@@ -278,20 +278,6 @@ export default function EditorPage() {
             newCtx.putImageData(imageData, 0, 0);
             const dataUrl = newCanvas.toDataURL('image/png');
             setFaviconSrc(dataUrl);
-            
-            // Re-draw the new image on the main canvas
-            const mainImg = new window.Image();
-            mainImg.onload = () => {
-              const mainCtx = canvas.getContext('2d');
-              if (mainCtx) {
-                const container = canvasContainerRef.current;
-                const size = Math.min(container?.clientWidth || 512, container?.clientHeight || 512, 512);
-                canvas.width = size;
-                canvas.height = size;
-                mainCtx.drawImage(mainImg, 0, 0, size, size);
-              }
-            }
-            mainImg.src = dataUrl;
         }
         setIsCropping(false);
     };
@@ -331,7 +317,7 @@ export default function EditorPage() {
         </Button>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_350px] gap-0">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-0">
         <div 
           className="flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}

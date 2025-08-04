@@ -552,9 +552,9 @@ setShowSizes(false);
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr] gap-0">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-0">
         {/* Left Panel: Tools (Desktop) */}
-        <aside className="border-r border-border flex-col hidden md:flex">
+        <aside className="border-r border-border flex-col hidden lg:flex">
              <ToolPanel
                 fileInputRef={fileInputRef}
                 onGenerateVariations={onGenerateVariations}
@@ -583,7 +583,7 @@ setShowSizes(false);
                     </CardHeader>
                     <CardContent className="flex-1">
                         <ScrollArea className="h-full">
-                            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pr-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
                                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
@@ -637,7 +637,7 @@ setShowSizes(false);
             </div>
 
              {/* Bottom Tools Panel (Mobile) */}
-             <div className="md:hidden sticky bottom-0 bg-background border-t z-10">
+             <div className="lg:hidden sticky bottom-0 bg-background border-t z-10">
                  <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="tools">
                     <AccordionTrigger className="p-4 bg-background hover:no-underline data-[state=open]:pb-2">
