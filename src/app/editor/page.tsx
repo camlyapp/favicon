@@ -353,42 +353,44 @@ export default function EditorPage() {
       <AppHeader isEditorPage={true} onSave={handleSave} />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Canvas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2">
-                         <Label htmlFor="canvas-color" className="sr-only">Background</Label>
-                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
-                        <Button className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
-                            <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
-                        </Button>
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                  <CardHeader className="p-4">
+                      <CardTitle className="text-base">Canvas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                      <div className="flex items-center gap-2">
+                           <Label htmlFor="canvas-color" className="sr-only">Background</Label>
+                          <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
+                          <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
+                              <RefreshCw className="mr-2 h-4 w-4" /> New
+                          </Button>
+                      </div>
+                  </CardContent>
+              </Card>
+              <Card>
+                  <CardHeader className="p-4">
+                      <CardTitle className="text-base">Crop</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                   {isCropping ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button size="sm" variant="destructive" onClick={() => setIsCropping(false)}><X className="mr-1 h-4 w-4" /> Cancel</Button>
+                      <Button size="sm" onClick={handleApplyCrop}><Check className="mr-1 h-4 w-4" /> Apply</Button>
                     </div>
-                </CardContent>
-            </Card>
+                  ) : (
+                    <Button size="sm" className="w-full" variant="secondary" onClick={startCropping}>
+                      <Crop className="mr-2 h-4 w-4" /> Crop
+                    </Button>
+                  )}
+                  </CardContent>
+              </Card>
+            </div>
             <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Crop</CardTitle>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Drawing</CardTitle>
                 </CardHeader>
-                <CardContent>
-                 {isCropping ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="destructive" onClick={() => setIsCropping(false)}><X className="mr-2 h-4 w-4" /> Cancel</Button>
-                    <Button onClick={handleApplyCrop}><Check className="mr-2 h-4 w-4" /> Apply</Button>
-                  </div>
-                ) : (
-                  <Button className="w-full" variant="secondary" onClick={startCropping}>
-                    <Crop className="mr-2 h-4 w-4" /> Crop Image
-                  </Button>
-                )}
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-lg">Drawing</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 pt-0">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-4">
                             <div>
