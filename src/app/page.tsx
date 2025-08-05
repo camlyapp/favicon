@@ -145,64 +145,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   </Dialog>
 );
 
-const ToolPanel = ({
-    fileInputRef,
-    onGenerateVariations,
-    isPending,
-    faviconSrc,
-    variations,
-    setFaviconSrc,
-    setGeneratedSizes,
-    setShowSizes,
-}: {
-    fileInputRef: React.RefObject<HTMLInputElement>;
-    onGenerateVariations: () => void;
-    isPending: boolean;
-    faviconSrc: string | null;
-    variations: string[];
-    setFaviconSrc: (src: string) => void;
-    setGeneratedSizes: (sizes: GeneratedSize[]) => void;
-    setShowSizes: (show: boolean) => void;
-}) => (
-    <>
-        <div className="p-4 space-y-4">
-             <Button className="w-full" size="lg" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" /> Upload Image
-            </Button>
-        </div>
-        <Separator/>
-        <Tabs defaultValue="ai" className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-1 mx-auto my-4 max-w-[calc(100%-2rem)]">
-                <TabsTrigger value="ai"><Sparkles className="mr-2 h-4 w-4"/> AI Tools</TabsTrigger>
-            </TabsList>
-             <ScrollArea className="flex-1">
-                <TabsContent value="ai" className="p-4 m-0">
-                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">AI Variations</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Generate unique variations of your icon using AI. Click a variation to start editing it.
-                      </p>
-                      <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} className="w-full">
-                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Generate Variations
-                      </Button>
-                      {variations.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2 mt-4 rounded-lg p-2 bg-secondary/50 max-h-64">
-                          {variations.map((v, i) => (
-                            <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
-                              <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                </TabsContent>
-            </ScrollArea>
-        </Tabs>
-    </>
-)
-
-
 export default function Home() {
   const { toast } = useToast();
   const router = useRouter();
@@ -529,11 +471,9 @@ setShowSizes(false);
 
       <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl font-bold hidden sm:block">Favicon Forge</h1>
-           <h1 className="text-xl font-bold sm:hidden">Forge</h1>
+            <Button variant="ghost" size="lg" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" /> Upload Image
+            </Button>
         </div>
         <div className="flex items-center gap-2">
             <Button onClick={handleGoToEditor} disabled={!faviconSrc} variant="outline" size="sm">
@@ -544,6 +484,10 @@ setShowSizes(false);
               <Eye className="mr-0 sm:mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Preview Sizes</span>
             </Button>
+             <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} variant="outline" size="sm">
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                <span className="hidden sm:inline">Generate Variations</span>
+              </Button>
             <ExportDialog
                 isExportDialogOpen={isExportDialogOpen}
                 setIsExportDialogOpen={setIsExportDialogOpen}
@@ -558,23 +502,9 @@ setShowSizes(false);
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0">
-        {/* Left Panel: Tools (Desktop) */}
-        <aside className="md:col-span-1 border-r border-border flex-col hidden md:flex">
-             <ToolPanel
-                fileInputRef={fileInputRef}
-                onGenerateVariations={onGenerateVariations}
-                isPending={isPending}
-                faviconSrc={faviconSrc}
-                variations={variations}
-                setFaviconSrc={setFaviconSrc}
-                setGeneratedSizes={setGeneratedSizes}
-                setShowSizes={setShowSizes}
-            />
-        </aside>
-
+      <main className="flex-1 grid grid-cols-1">
         {/* Right Panel: Canvas & Previews */}
-        <div className="md:col-span-2 flex flex-col bg-muted/20 relative">
+        <div className="flex flex-col bg-muted/20 relative">
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
                  <Card className="flex-1 flex flex-col">
@@ -613,64 +543,47 @@ setShowSizes(false);
                     </CardFooter>
                 </Card>
               ) : (
-                <div className="flex-1 flex items-center justify-center">
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none"
-                        style={{
-                            backgroundImage: `
-                              linear-gradient(45deg, #eee 25%, transparent 25%),
-                              linear-gradient(-45deg, #eee 25%, transparent 25%),
-                              linear-gradient(45deg, transparent 75%, #eee 75%),
-                              linear-gradient(-45deg, transparent 75%, #eee 75%)`,
-                            backgroundSize: '20px 20px',
-                            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                        }}
-                    >
-                    {faviconSrc ? (
-                      <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
-                        <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
-                        <h3 className="font-semibold text-lg sm:text-xl">Create your icon</h3>
-                        <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Click here to upload an image or start with a blank canvas from the tools.</p>
-                      </div>
-                    )}
-                  </button>
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                    <div className="lg:col-span-3 flex items-center justify-center">
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none"
+                            style={{
+                                backgroundImage: `
+                                  linear-gradient(45deg, #eee 25%, transparent 25%),
+                                  linear-gradient(-45deg, #eee 25%, transparent 25%),
+                                  linear-gradient(45deg, transparent 75%, #eee 75%),
+                                  linear-gradient(-45deg, transparent 75%, #eee 75%)`,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                            }}
+                        >
+                        {faviconSrc ? (
+                          <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
+                            <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
+                            <h3 className="font-semibold text-lg sm:text-xl">Create your icon</h3>
+                            <p className="text-sm text-muted-foreground/80 mt-1 max-w-xs">Click here to upload an image or start with a blank canvas from the tools.</p>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                     {variations.length > 0 && (
+                        <div className="lg:col-span-1">
+                            <h3 className="text-lg font-medium mb-4 text-center lg:text-left">AI Variations</h3>
+                            <div className="grid grid-cols-3 lg:grid-cols-2 gap-2 rounded-lg p-2 bg-secondary/50">
+                              {variations.map((v, i) => (
+                                <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
+                                  <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
+                                </button>
+                              ))}
+                            </div>
+                        </div>
+                      )}
                 </div>
               )}
-            </div>
-
-             {/* Bottom Tools Panel (Mobile) */}
-             <div className="md:hidden sticky bottom-0 bg-background border-t z-10">
-                 <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="tools">
-                    <AccordionTrigger className="p-4 bg-background hover:no-underline data-[state=open]:pb-2">
-                        <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2 text-lg font-semibold">
-                                <Settings className="w-6 h-6"/>
-                                <span>Tools</span>
-                            </div>
-                            <ChevronUp className="h-5 w-5 shrink-0 transition-transform duration-200 accordion-chevron" />
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                         <div className="max-h-[50vh] overflow-y-auto">
-                             <ToolPanel
-                                fileInputRef={fileInputRef}
-                                onGenerateVariations={onGenerateVariations}
-                                isPending={isPending}
-                                faviconSrc={faviconSrc}
-                                variations={variations}
-                                setFaviconSrc={setFaviconSrc}
-                                setGeneratedSizes={setGeneratedSizes}
-                                setShowSizes={setShowSizes}
-                            />
-                         </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
             </div>
         </div>
       </main>
