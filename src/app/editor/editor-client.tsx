@@ -177,7 +177,7 @@ export default function EditorPageContent() {
     
     const baseSize = canvas.width * 0.4;
     const fontSize = Math.min(baseSize, baseSize / (text.length / 1.5) );
-    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+    ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
     
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
