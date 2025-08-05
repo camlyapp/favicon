@@ -419,7 +419,7 @@ export default function EditorPage() {
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-            <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl"
+            <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl overflow-hidden"
                  style={{
                     backgroundImage: `
                       linear-gradient(45deg, #eee 25%, transparent 25%),
@@ -471,3 +471,5 @@ export default function EditorPage() {
     </div>
   );
 }
+
+    

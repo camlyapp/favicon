@@ -514,7 +514,7 @@ setShowSizes(false);
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none"
+                            className="relative aspect-square w-full max-w-[400px] bg-white p-4 shadow-2xl rounded-2xl focus:outline-none overflow-hidden"
                             style={{
                                 backgroundImage: `
                                   linear-gradient(45deg, #eee 25%, transparent 25%),
@@ -526,7 +526,7 @@ setShowSizes(false);
                             }}
                         >
                         {faviconSrc ? (
-                          <Image src={faviconSrc} alt="Favicon" layout="fill" objectFit="contain" />
+                          <Image src={faviconSrc} alt="Favicon" fill={true} objectFit="contain" className="rounded-lg" />
                         ) : (
                           <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center p-4">
                             <Upload className="w-12 h-12 sm:w-16 sm:h-16 mb-4 text-muted-foreground/50" />
@@ -557,3 +557,5 @@ setShowSizes(false);
     </div>
   );
 }
+
+    
