@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
+import { ThemeToggle } from './theme-toggle';
 
 interface GeneratedSize {
   size: number;
@@ -215,9 +216,8 @@ export function AppHeader({
                         )}
                     </>
                 )}
+                <ThemeToggle />
             </div>
         </header>
     );
 }
-
-    
