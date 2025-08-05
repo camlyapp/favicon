@@ -41,6 +41,9 @@ export default function EditorPage() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const [canvasColor, setCanvasColor] = useState('#ffffff');
+  const [drawColor, setDrawColor] = useState('#A050C3');
+  const [text, setText] = useState('A');
+
 
   // Cropping state
   const [isCropping, setIsCropping] = useState(false);
@@ -54,12 +57,12 @@ export default function EditorPage() {
     if (imageToEdit) {
       setFaviconSrc(imageToEdit);
     } else {
+      router.replace('/');
       toast({
         title: "No Image Found",
         description: "Please select an image to edit first.",
         variant: "destructive"
       });
-      router.replace('/');
     }
     setIsLoading(false);
   }, [router, toast]);
@@ -94,7 +97,6 @@ export default function EditorPage() {
                  
                  ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
                  
-                 // After drawing, if we are not cropping, set a default crop rect for later
                  if (!isCropping) {
                     const initialSize = Math.min(canvas.width, canvas.height) * 0.8;
                     setCropRect({
@@ -136,13 +138,13 @@ export default function EditorPage() {
   };
 
 
-  const handleDrawShape = (shape: 'square' | 'circle' | 'text') => {
+  const handleDrawShape = (shape: 'square' | 'circle') => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.fillStyle = '#A050C3';
+    ctx.fillStyle = drawColor;
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = Math.max(1, canvas.width * 0.04);
 
@@ -159,17 +161,38 @@ export default function EditorPage() {
       ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
       ctx.fill();
       ctx.stroke();
-    } else if (shape === 'text') {
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = `bold ${canvas.width * 0.2}px Inter, sans-serif`;
-      ctx.fillText('Aa', centerX, centerY);
-      ctx.strokeText('Aa', centerX, centerY);
-    }
+    } 
     
     const dataUrl = canvas.toDataURL();
     setFaviconSrc(dataUrl);
   };
+
+  const handleDrawText = () => {
+     const canvas = canvasRef.current;
+    if (!canvas || !text) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = drawColor;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = Math.max(1, canvas.width * 0.02);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Adjust font size dynamically based on text length
+    const baseSize = canvas.width * 0.4;
+    const fontSize = Math.min(baseSize, baseSize / (text.length / 1.5) );
+    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    ctx.fillText(text, centerX, centerY);
+    ctx.strokeText(text, centerX, centerY);
+    
+    const dataUrl = canvas.toDataURL();
+    setFaviconSrc(dataUrl);
+  }
   
     const getHandleAt = (e: MouseEvent<HTMLDivElement>) => {
         if (!canvasRef.current) return null;
@@ -339,7 +362,7 @@ export default function EditorPage() {
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-            <div className="relative aspect-square w-full max-w-[600px] bg-white shadow-2xl rounded-2xl"
+            <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl"
                  style={{
                     backgroundImage: `
                       linear-gradient(45deg, #eee 25%, transparent 25%),
@@ -388,53 +411,71 @@ export default function EditorPage() {
             </div>
         </div>
 
-        <aside className="md:col-span-1 border-l border-border flex flex-col p-4 space-y-6 overflow-y-auto">
-            <div>
-                <Label>Canvas</Label>
-                <div className="flex items-center gap-2 mt-2">
-                    <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
-                    <Button className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
-                    </Button>
-                </div>
-            </div>
-            <Separator />
-             <div>
-                <h3 className="text-lg font-medium">Crop</h3>
-                {isCropping ? (
-                  <div className="grid grid-cols-2 gap-2 mt-2">
+        <aside className="md:col-span-1 border-l border-border flex flex-col p-4 space-y-4 overflow-y-auto">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Canvas</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                         <Label htmlFor="canvas-color" className="sr-only">Background</Label>
+                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-10 w-14 cursor-pointer" />
+                        <Button className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
+                            <RefreshCw className="mr-2 h-4 w-4" /> New Blank Canvas
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Crop</CardTitle>
+                </CardHeader>
+                <CardContent>
+                 {isCropping ? (
+                  <div className="grid grid-cols-2 gap-2">
                     <Button variant="destructive" onClick={() => setIsCropping(false)}><X className="mr-2 h-4 w-4" /> Cancel</Button>
                     <Button onClick={handleApplyCrop}><Check className="mr-2 h-4 w-4" /> Apply</Button>
                   </div>
                 ) : (
-                  <Button className="w-full mt-2" variant="secondary" onClick={startCropping}>
+                  <Button className="w-full" variant="secondary" onClick={startCropping}>
                     <Crop className="mr-2 h-4 w-4" /> Crop Image
                   </Button>
                 )}
-             </div>
-            <Separator />
-            <div>
-                <h3 className="text-lg font-medium">Shapes & Text</h3>
-                 <p className="text-sm text-muted-foreground pb-4">
-                   Click a button to add a basic shape or text to the canvas.
-                  </p>
-                <div className="flex justify-start gap-2">
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('text')} disabled={isCropping}><Type /></Button>
-                </div>
-            </div>
-             <div>
-                <h3 className="text-lg font-medium">Colors & Gradients</h3>
-                 <p className="text-sm text-muted-foreground pb-4">
-                   Feature coming soon.
-                  </p>
-                <div className="flex justify-start gap-2">
-                    <Button variant="outline" size="icon" disabled><Palette /></Button>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Drawing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor="draw-color">Color</Label>
+                        <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
+                    </div>
+                    <div>
+                        <Label>Shapes</Label>
+                         <div className="flex justify-start gap-2 mt-1">
+                            <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
+                            <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
+                        </div>
+                    </div>
+                    <div>
+                        <Label htmlFor="text-input">Text</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input id="text-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={3} disabled={isCropping} />
+                           <Button variant="outline" size="icon" onClick={handleDrawText} disabled={isCropping || !text}>
+                              <Type />
+                           </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </aside>
       </main>
     </div>
   );
 }
+
+    
