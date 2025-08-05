@@ -4,34 +4,20 @@ import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'Favicon Forge | Create and Generate Favicons Instantly',
+  title: {
+    default: 'Favicon Forge',
+    template: '%s | Favicon Forge',
+  },
   description: 'A modern, intuitive favicon creation app for generating pixel-perfect site icons. Upload an image, use AI to generate variations, and export all necessary sizes in one click.',
-  keywords: ['favicon generator', 'favicon creator', 'icon generator', 'apple touch icon', 'android chrome icon', 'site icon', 'free favicon', 'online favicon tool', 'AI favicon'],
   authors: [{ name: 'Firebase' }],
   creator: 'Firebase',
   publisher: 'Firebase',
   metadataBase: new URL('https://your-app-url.com'), // Replace with your actual domain
   openGraph: {
-    title: 'Favicon Forge | Create and Generate Favicons Instantly',
-    description: 'The ultimate tool for creating beautiful, production-ready favicons. Use AI to explore ideas and export a complete package for your website.',
     url: 'https://your-app-url.com', // Replace with your actual domain
     siteName: 'Favicon Forge',
-    images: [
-      {
-        url: '/og-image.png', // Replace with a link to your open graph image
-        width: 1200,
-        height: 630,
-        alt: 'Favicon Forge app interface showing a favicon being edited.',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Favicon Forge | Create and Generate Favicons Instantly',
-    description: 'The ultimate tool for creating beautiful, production-ready favicons. Use AI to explore ideas and export a complete package for your website.',
-    images: ['/twitter-og-image.png'], // Replace with a link to your twitter open graph image
   },
   robots: {
     index: true,
@@ -63,7 +49,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
         <div className="flex-grow">
