@@ -30,6 +30,8 @@ interface Rect {
   height: number;
 }
 
+const EDITOR_RESOLUTION = 1024;
+
 export default function EditorPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -69,9 +71,8 @@ export default function EditorPage() {
         const ctx = canvas.getContext('2d');
         const img = new window.Image();
         img.onload = () => {
-            const container = canvasContainerRef.current;
-            if (container && ctx) {
-                 const size = Math.min(container.clientWidth, container.clientHeight, 300);
+            if (ctx) {
+                 const size = EDITOR_RESOLUTION;
                  canvas.width = size;
                  canvas.height = size;
                  ctx.fillStyle = canvasColor;
@@ -80,8 +81,8 @@ export default function EditorPage() {
                  const imgAspectRatio = img.width / img.height;
                  let drawWidth = size;
                  let drawHeight = size;
-
-                 if (imgAspectRatio > 1) {
+                 
+                 if (img.width > img.height) {
                     drawHeight = size / imgAspectRatio;
                  } else {
                     drawWidth = size * imgAspectRatio;
@@ -90,6 +91,8 @@ export default function EditorPage() {
                  const xOffset = (size - drawWidth) / 2;
                  const yOffset = (size - drawHeight) / 2;
                  
+                 ctx.imageSmoothingEnabled = true;
+                 ctx.imageSmoothingQuality = 'high';
                  ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
                  
                  if (!isCropping) {
@@ -121,7 +124,7 @@ export default function EditorPage() {
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const size = Math.min(canvas.parentElement?.clientWidth || 300, 300);
+      const size = EDITOR_RESOLUTION;
       canvas.width = size;
       canvas.height = size;
       ctx.fillStyle = canvasColor;
@@ -196,17 +199,21 @@ export default function EditorPage() {
         const { x, y, width, height } = cropRect;
         const handleSize = 10;
 
-        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 'tl';
-        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 'tr';
-        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'bl';
-        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'br';
+        // Scale mouse coords to canvas resolution
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
 
-        if (mouseX > x + handleSize && mouseX < x + width - handleSize && mouseY > y - handleSize && mouseY < y + handleSize) return 't';
-        if (mouseX > x + handleSize && mouseX < x + width - handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'b';
-        if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'l';
-        if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'r';
+        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 'tl';
+        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 'tr';
+        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'bl';
+        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'br';
 
-        if (mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height) return 'move';
+        if (mouseX * scaleX > x + handleSize && mouseX * scaleX < x + width - handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 't';
+        if (mouseX * scaleX > x + handleSize && mouseX * scaleX < x + width - handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'b';
+        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y + handleSize && mouseY * scaleY < y + height - handleSize) return 'l';
+        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y + handleSize && mouseY * scaleY < y + height - handleSize) return 'r';
+
+        if (mouseX * scaleX > x && mouseX * scaleX < x + width && mouseY * scaleY > y && mouseY * scaleY < y + height) return 'move';
         return null;
     };
 
@@ -214,10 +221,14 @@ export default function EditorPage() {
         if (!isCropping || !canvasRef.current) return;
         const handle = getHandleAt(e);
         if (handle) {
+            const canvas = canvasRef.current;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
             setIsDragging(true);
             setResizeHandle(handle);
-            const rect = canvasRef.current.getBoundingClientRect();
-            setDragStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+            setDragStart({ x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY });
         }
     };
 
@@ -226,8 +237,10 @@ export default function EditorPage() {
         
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
 
         const dx = mouseX - dragStart.x;
         const dy = mouseY - dragStart.y;
@@ -331,6 +344,9 @@ export default function EditorPage() {
         </div>
     );
   }
+  
+  const canvasDisplaySize = canvasContainerRef.current ? Math.min(canvasContainerRef.current.clientWidth, 400) : 300;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -403,7 +419,7 @@ export default function EditorPage() {
           onMouseLeave={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-            <div className="relative aspect-square w-full max-w-[300px] bg-white shadow-2xl rounded-2xl"
+            <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl"
                  style={{
                     backgroundImage: `
                       linear-gradient(45deg, #eee 25%, transparent 25%),
@@ -417,36 +433,36 @@ export default function EditorPage() {
                 onMouseDown={handleMouseDown}
             >
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
-                  {isCropping && (
+                  {isCropping && canvasRef.current && (
                     <>
                       {/* Overlay */}
                       <div className="absolute top-0 left-0 w-full h-full bg-black/50"
                           style={{
                               clipPath: `evenodd(
-                                  M 0 0 H ${canvasRef.current?.width || 0} V ${canvasRef.current?.height || 0} H 0 Z
-                                  M ${cropRect.x} ${cropRect.y} H ${cropRect.x + cropRect.width} V ${cropRect.y + cropRect.height} H ${cropRect.x} Z
+                                  M 0 0 H ${canvasDisplaySize} V ${canvasDisplaySize} H 0 Z
+                                  M ${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)} ${cropRect.y / (EDITOR_RESOLUTION/canvasDisplaySize)} H ${ (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION/canvasDisplaySize)} V ${(cropRect.y + cropRect.height) / (EDITOR_RESOLUTION/canvasDisplaySize)} H ${cropRect.x/(EDITOR_RESOLUTION/canvasDisplaySize)} Z
                               )`
                           }}
                       />
                       {/* Border */}
                       <div className="absolute border-2 border-dashed border-white pointer-events-none"
                           style={{
-                              left: cropRect.x,
-                              top: cropRect.y,
-                              width: cropRect.width,
-                              height: cropRect.height,
+                              left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize),
+                              top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize),
+                              width: cropRect.width / (EDITOR_RESOLUTION / canvasDisplaySize),
+                              height: cropRect.height / (EDITOR_RESOLUTION / canvasDisplaySize),
                           }}
                       />
                       {/* Handles */}
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: (cropRect.y + cropRect.height) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: (cropRect.y + cropRect.height) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nwse-resize' }} />
 
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.width/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, top: cropRect.y / (EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.width/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, top: (cropRect.y + cropRect.height)/(EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, top: `calc(${cropRect.y/(EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.height/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, cursor: 'ew-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: (cropRect.x + cropRect.width)/(EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, top: `calc(${cropRect.y/(EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.height/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, cursor: 'ew-resize' }} />
                     </>
                   )}
             </div>
@@ -455,5 +471,3 @@ export default function EditorPage() {
     </div>
   );
 }
-
-    
