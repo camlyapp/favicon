@@ -76,7 +76,7 @@ export default function EditorPage() {
         img.onload = () => {
             const container = canvasContainerRef.current;
             if (container && ctx) {
-                 const size = Math.min(container.clientWidth, container.clientHeight, 400);
+                 const size = Math.min(container.clientWidth, container.clientHeight, 300);
                  canvas.width = size;
                  canvas.height = size;
                  ctx.fillStyle = canvasColor;
@@ -127,7 +127,7 @@ export default function EditorPage() {
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const size = Math.min(canvas.parentElement?.clientWidth || 400, 400);
+      const size = Math.min(canvas.parentElement?.clientWidth || 300, 300);
       canvas.width = size;
       canvas.height = size;
       ctx.fillStyle = canvasColor;
@@ -354,64 +354,8 @@ export default function EditorPage() {
         </Button>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-0">
-        <div 
-          className="flex items-center justify-center bg-muted/20 p-4 relative"
-          ref={canvasContainerRef}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onMouseMove={handleMouseMove}
-        >
-            <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl"
-                 style={{
-                    backgroundImage: `
-                      linear-gradient(45deg, #eee 25%, transparent 25%),
-                      linear-gradient(-45deg, #eee 25%, transparent 25%),
-                      linear-gradient(45deg, transparent 75%, #eee 75%),
-                      linear-gradient(-45deg, transparent 75%, #eee 75%)`,
-                    backgroundSize: '20px 20px',
-                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    cursor: isDragging ? 'grabbing' : isCropping ? 'crosshair' : 'default',
-                }}
-                onMouseDown={handleMouseDown}
-            >
-                <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
-                  {isCropping && (
-                    <>
-                      {/* Overlay */}
-                      <div className="absolute top-0 left-0 w-full h-full bg-black/50"
-                          style={{
-                              clipPath: `evenodd(
-                                  M 0 0 H ${canvasRef.current?.width || 0} V ${canvasRef.current?.height || 0} H 0 Z
-                                  M ${cropRect.x} ${cropRect.y} H ${cropRect.x + cropRect.width} V ${cropRect.y + cropRect.height} H ${cropRect.x} Z
-                              )`
-                          }}
-                      />
-                      {/* Border */}
-                      <div className="absolute border-2 border-dashed border-white pointer-events-none"
-                          style={{
-                              left: cropRect.x,
-                              top: cropRect.y,
-                              width: cropRect.width,
-                              height: cropRect.height,
-                          }}
-                      />
-                      {/* Handles */}
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
-
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
-                    </>
-                  )}
-            </div>
-        </div>
-
-        <aside className="border-l border-border flex flex-col p-4 space-y-4 overflow-y-auto">
+      <main className="flex-1 grid grid-cols-3 gap-0">
+        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">Canvas</CardTitle>
@@ -473,7 +417,65 @@ export default function EditorPage() {
                 </CardContent>
             </Card>
         </aside>
+        <div 
+          className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
+          ref={canvasContainerRef}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onMouseMove={handleMouseMove}
+        >
+            <div className="relative aspect-square w-full max-w-[300px] bg-white shadow-2xl rounded-2xl"
+                 style={{
+                    backgroundImage: `
+                      linear-gradient(45deg, #eee 25%, transparent 25%),
+                      linear-gradient(-45deg, #eee 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #eee 75%),
+                      linear-gradient(-45deg, transparent 75%, #eee 75%)`,
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+                    cursor: isDragging ? 'grabbing' : isCropping ? 'crosshair' : 'default',
+                }}
+                onMouseDown={handleMouseDown}
+            >
+                <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
+                  {isCropping && (
+                    <>
+                      {/* Overlay */}
+                      <div className="absolute top-0 left-0 w-full h-full bg-black/50"
+                          style={{
+                              clipPath: `evenodd(
+                                  M 0 0 H ${canvasRef.current?.width || 0} V ${canvasRef.current?.height || 0} H 0 Z
+                                  M ${cropRect.x} ${cropRect.y} H ${cropRect.x + cropRect.width} V ${cropRect.y + cropRect.height} H ${cropRect.x} Z
+                              )`
+                          }}
+                      />
+                      {/* Border */}
+                      <div className="absolute border-2 border-dashed border-white pointer-events-none"
+                          style={{
+                              left: cropRect.x,
+                              top: cropRect.y,
+                              width: cropRect.width,
+                              height: cropRect.height,
+                          }}
+                      />
+                      {/* Handles */}
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y - 6, cursor: 'nwse-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nesw-resize' }} />
+                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x + cropRect.width - 6, top: cropRect.y + cropRect.height - 6, cursor: 'nwse-resize' }} />
+
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x}px + ${cropRect.width/2}px - 6px)`, top: cropRect.y + cropRect.height - 1.5, cursor: 'ns-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
+                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x + cropRect.width - 1.5, top: `calc(${cropRect.y}px + ${cropRect.height/2}px - 6px)`, cursor: 'ew-resize' }} />
+                    </>
+                  )}
+            </div>
+        </div>
+
       </main>
     </div>
   );
 }
+
+    
