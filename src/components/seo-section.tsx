@@ -8,9 +8,9 @@ export function SeoSection() {
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Why Your Favicon Matters</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Elevate Your Brand with the Perfect Favicon</h2>
             <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              A great favicon is a small detail that makes a huge difference. It reinforces your brand, improves user experience, and boosts your site's credibility in browser tabs and search results. Favicon Forge gives you the tools to create a memorable icon that stands out.
+             A favicon is more than just an icon; it's a vital part of your brand identity. It builds trust, improves user experience in browser tabs and bookmarks, and boosts your site's professional appearance in search results. Favicon Forge gives you the tools to create a memorable, high-resolution icon that stands out and makes a lasting impression.
             </p>
           </div>
         </div>
@@ -21,7 +21,7 @@ export function SeoSection() {
              </div>
             <h3 className="text-lg font-bold">AI-Powered Variations</h3>
             <p className="text-sm text-muted-foreground">
-              Stuck for ideas? Use AI to generate unique and creative variations of your icon in seconds.
+             Unleash your creativity. Upload any image and our AI will generate unique and inspiring favicon ideas in seconds. Explore different styles, colors, and concepts without any design experience.
             </p>
           </div>
           <div className="grid gap-1 text-center">
@@ -30,7 +30,7 @@ export function SeoSection() {
              </div>
             <h3 className="text-lg font-bold">Pixel-Perfect Previews</h3>
             <p className="text-sm text-muted-foreground">
-              Preview your favicon across dozens of standard sizes to ensure it looks crisp and clear everywhere.
+             Ensure your icon looks sharp on every device. Instantly preview your favicon across dozens of standard sizes, from browser tabs to Apple touch icons and Android home screen shortcuts.
             </p>
           </div>
           <div className="grid gap-1 text-center">
@@ -39,7 +39,7 @@ export function SeoSection() {
              </div>
             <h3 className="text-lg font-bold">One-Click Export</h3>
             <p className="text-sm text-muted-foreground">
-              Download a production-ready package with all the sizes and formats you need, including PNGs and ICO.
+             Get everything you need in one simple download. We provide a production-ready package with all required PNG sizes, a favicon.ico file, and the necessary HTML code.
             </p>
           </div>
         </div>
