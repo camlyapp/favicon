@@ -19,9 +19,24 @@ import {
     Loader2,
     Crop,
     Check,
-    X
+    X,
+    Trash2,
+    AlignCenter,
+    AlignLeft,
+    AlignRight,
+    Bold
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
+import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Switch } from '@/components/ui/switch';
+
 
 interface Rect {
   x: number;
@@ -29,6 +44,24 @@ interface Rect {
   width: number;
   height: number;
 }
+
+interface CanvasElement {
+    id: string;
+    type: 'shape' | 'text' | 'image';
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    color?: string;
+    shape?: 'square' | 'circle';
+    text?: string;
+    fontSize?: number;
+    fontFamily?: string;
+    textAlign?: 'left' | 'center' | 'right';
+    fontWeight?: 'normal' | 'bold';
+    img?: HTMLImageElement;
+}
+
 
 const EDITOR_RESOLUTION = 1024;
 
@@ -41,301 +74,294 @@ export default function EditorPageContent() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const [canvasColor, setCanvasColor] = useState('#ffffff');
-  const [drawColor, setDrawColor] = useState('#A050C3');
-  const [text, setText] = useState('A');
+  
+  const [elements, setElements] = useState<CanvasElement[]>([]);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
-  const [isCropping, setIsCropping] = useState(false);
-  const [cropRect, setCropRect] = useState<Rect>({ x: 50, y: 50, width: 200, height: 200 });
   const [isDragging, setIsDragging] = useState(false);
-  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
+  const [textInput, setTextInput] = useState('A');
+  const [textColor, setTextColor] = useState('#A050C3');
+  const [fontSize, setFontSize] = useState(128);
+  const [fontFamily, setFontFamily] = useState('Space Grotesk');
+  const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
+  const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('bold');
+
+  const [shapeColor, setShapeColor] = useState('#A050C3');
+
+
+  const renderCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    ctx.fillStyle = canvasColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    elements.forEach(el => {
+        if(el.type === 'image' && el.img) {
+             const imgAspectRatio = el.img.width / el.img.height;
+             let drawWidth = canvas.width;
+             let drawHeight = canvas.height;
+             
+             if (el.img.width > el.img.height) {
+                drawHeight = canvas.width / imgAspectRatio;
+             } else {
+                drawWidth = canvas.width * imgAspectRatio;
+             }
+
+             const xOffset = (canvas.width - drawWidth) / 2;
+             const yOffset = (canvas.height - drawHeight) / 2;
+             
+             ctx.drawImage(el.img, xOffset, yOffset, drawWidth, drawHeight);
+        } else if (el.type === 'shape' && el.color && el.shape) {
+            ctx.fillStyle = el.color;
+            if (el.shape === 'square') {
+                ctx.fillRect(el.x, el.y, el.width, el.height);
+            } else if (el.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(el.x + el.width/2, el.y + el.height/2, el.width/2, 0, 2 * Math.PI, false);
+                ctx.fill();
+            }
+        } else if (el.type === 'text' && el.text && el.color && el.fontSize && el.fontFamily) {
+            ctx.fillStyle = el.color;
+            ctx.font = `${el.fontWeight || 'normal'} ${el.fontSize}px "${el.fontFamily}", sans-serif`;
+            ctx.textAlign = el.textAlign || 'left';
+            ctx.textBaseline = 'top';
+
+            let x = el.x;
+            if (el.textAlign === 'center') {
+                x = el.x + el.width / 2;
+            } else if (el.textAlign === 'right') {
+                x = el.x + el.width;
+            }
+            
+            ctx.fillText(el.text, x, el.y);
+        }
+        
+        if (el.id === selectedElementId) {
+            ctx.strokeStyle = '#007BFF';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(el.x-2, el.y-2, el.width+4, el.height+4);
+        }
+    });
+  }
 
   useEffect(() => {
     const imageToEdit = sessionStorage.getItem('faviconToEdit');
     if (imageToEdit) {
       setFaviconSrc(imageToEdit);
+       const img = new window.Image();
+        img.onload = () => {
+            const size = EDITOR_RESOLUTION;
+             const newImageElement: CanvasElement = {
+                id: `img_${Date.now()}`,
+                type: 'image',
+                x: 0,
+                y: 0,
+                width: size,
+                height: size,
+                img: img
+             };
+            setElements([newImageElement]);
+        };
+        img.src = imageToEdit;
+
     } else {
-      router.replace('/');
-      toast({
-        title: "No Image Found",
-        description: "Please select an image to edit first.",
-        variant: "destructive"
-      });
+      handleNewCanvas();
     }
     setIsLoading(false);
   }, [router, toast]);
-
+  
   useEffect(() => {
-    if (faviconSrc && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        const img = new window.Image();
-        img.onload = () => {
-            if (ctx) {
-                 const size = EDITOR_RESOLUTION;
-                 canvas.width = size;
-                 canvas.height = size;
-                 ctx.fillStyle = canvasColor;
-                 ctx.fillRect(0,0,size,size);
-
-                 const imgAspectRatio = img.width / img.height;
-                 let drawWidth = size;
-                 let drawHeight = size;
-                 
-                 if (img.width > img.height) {
-                    drawHeight = size / imgAspectRatio;
-                 } else {
-                    drawWidth = size * imgAspectRatio;
-                 }
-
-                 const xOffset = (size - drawWidth) / 2;
-                 const yOffset = (size - drawHeight) / 2;
-                 
-                 ctx.imageSmoothingEnabled = true;
-                 ctx.imageSmoothingQuality = 'high';
-                 ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
-                 
-                 if (!isCropping) {
-                    const initialSize = Math.min(canvas.width, canvas.height) * 0.8;
-                    setCropRect({
-                        x: (canvas.width - initialSize) / 2,
-                        y: (canvas.height - initialSize) / 2,
-                        width: initialSize,
-                        height: initialSize,
-                    });
-                 }
-            }
-        };
-        img.src = faviconSrc;
+    const canvas = canvasRef.current;
+    if(canvas) {
+        canvas.width = EDITOR_RESOLUTION;
+        canvas.height = EDITOR_RESOLUTION;
+        renderCanvas();
     }
-  }, [faviconSrc, canvasColor, isCropping]);
+  }, [elements, canvasColor, selectedElementId]);
 
   const handleSave = () => {
     if (canvasRef.current) {
-        const dataUrl = canvasRef.current.toDataURL('image/png');
-        sessionStorage.setItem('croppedImage', dataUrl);
-        router.push('/');
+        setSelectedElementId(null);
+        setTimeout(() => {
+             if (canvasRef.current) {
+                const dataUrl = canvasRef.current.toDataURL('image/png');
+                sessionStorage.setItem('croppedImage', dataUrl);
+                router.push('/');
+             }
+        }, 100);
     }
   };
 
   const handleNewCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      const size = EDITOR_RESOLUTION;
-      canvas.width = size;
-      canvas.height = size;
-      ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, size, size);
-      const dataUrl = canvas.toDataURL();
-      setFaviconSrc(dataUrl);
-    }
+    setElements([]);
+    setSelectedElementId(null);
   };
 
-  const handleDrawShape = (shape: 'square' | 'circle') => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.fillStyle = drawColor;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = Math.max(1, canvas.width * 0.04);
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-
-    if (shape === 'square') {
-      const size = canvas.width * 0.5;
-      ctx.fillRect(centerX - size / 2, centerY - size / 2, size, size);
-      ctx.strokeRect(centerX - size / 2, centerY - size / 2, size, size);
-    } else if (shape === 'circle') {
-      const radius = canvas.width * 0.25;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-      ctx.fill();
-      ctx.stroke();
-    } 
-    
-    const dataUrl = canvas.toDataURL();
-    setFaviconSrc(dataUrl);
-  };
-
-  const handleDrawText = () => {
-     const canvas = canvasRef.current;
-    if (!canvas || !text) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.fillStyle = drawColor;
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = Math.max(1, canvas.width * 0.02);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    const baseSize = canvas.width * 0.4;
-    const fontSize = Math.min(baseSize, baseSize / (text.length / 1.5) );
-    ctx.font = `bold ${fontSize}px "Space Grotesk", sans-serif`;
-    
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    ctx.fillText(text, centerX, centerY);
-    ctx.strokeText(text, centerX, centerY);
-    
-    const dataUrl = canvas.toDataURL();
-    setFaviconSrc(dataUrl);
+  const addShape = (shape: 'square' | 'circle') => {
+    const size = EDITOR_RESOLUTION * 0.4;
+    const newShape: CanvasElement = {
+        id: `${shape}_${Date.now()}`,
+        type: 'shape',
+        shape: shape,
+        x: (EDITOR_RESOLUTION - size)/2,
+        y: (EDITOR_RESOLUTION - size)/2,
+        width: size,
+        height: size,
+        color: shapeColor,
+    };
+    setElements(prev => [...prev, newShape]);
+    setSelectedElementId(newShape.id);
   }
-  
-    const getHandleAt = (e: MouseEvent<HTMLDivElement>) => {
-        if (!canvasRef.current) return null;
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
 
-        const { x, y, width, height } = cropRect;
-        const handleSize = 10;
+  const addText = () => {
+    if (!textInput) return;
+    
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if(!ctx) return;
 
-        // Scale mouse coords to canvas resolution
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+    ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
+    const textMetrics = ctx.measureText(textInput);
+    const textWidth = textMetrics.width;
+    const textHeight = fontSize;
 
-        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 'tl';
-        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 'tr';
-        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'bl';
-        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'br';
-
-        if (mouseX * scaleX > x + handleSize && mouseX * scaleX < x + width - handleSize && mouseY * scaleY > y - handleSize && mouseY * scaleY < y + handleSize) return 't';
-        if (mouseX * scaleX > x + handleSize && mouseX * scaleX < x + width - handleSize && mouseY * scaleY > y + height - handleSize && mouseY * scaleY < y + height + handleSize) return 'b';
-        if (mouseX * scaleX > x - handleSize && mouseX * scaleX < x + handleSize && mouseY * scaleY > y + handleSize && mouseY * scaleY < y + height - handleSize) return 'l';
-        if (mouseX * scaleX > x + width - handleSize && mouseX * scaleX < x + width + handleSize && mouseY * scaleY > y + handleSize && mouseY * scaleY < y + height - handleSize) return 'r';
-
-        if (mouseX * scaleX > x && mouseX * scaleX < x + width && mouseY * scaleY > y && mouseY * scaleY < y + height) return 'move';
-        return null;
+    const newText: CanvasElement = {
+        id: `text_${Date.now()}`,
+        type: 'text',
+        x: (EDITOR_RESOLUTION - textWidth)/2,
+        y: (EDITOR_RESOLUTION - textHeight)/2,
+        width: textWidth,
+        height: textHeight,
+        text: textInput,
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        textAlign: textAlign,
+        fontWeight: fontWeight,
+        color: textColor
     };
+    setElements(prev => [...prev, newText]);
+    setSelectedElementId(newText.id);
+  };
 
-    const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-        if (!isCropping || !canvasRef.current) return;
-        const handle = getHandleAt(e);
-        if (handle) {
-            const canvas = canvasRef.current;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+  const deleteSelectedElement = () => {
+    if(!selectedElementId) return;
+    setElements(prev => prev.filter(el => el.id !== selectedElementId));
+    setSelectedElementId(null);
+  }
 
-            setIsDragging(true);
-            setResizeHandle(handle);
-            setDragStart({ x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY });
+  const getElementAt = (e: MouseEvent<HTMLDivElement>) => {
+    if (!canvasRef.current) return null;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    for (let i = elements.length - 1; i >= 0; i--) {
+        const el = elements[i];
+        if (el.type === 'image') continue; 
+        if (mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
+            return el;
         }
-    };
+    }
+    return null;
+  }
 
-    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-        if (!isDragging || !isCropping || !resizeHandle || !canvasRef.current) return;
-        
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    if (!canvasRef.current) return;
+    const element = getElementAt(e);
+    if(element) {
+        setSelectedElementId(element.id);
+        setIsDragging(true);
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         const mouseX = (e.clientX - rect.left) * scaleX;
         const mouseY = (e.clientY - rect.top) * scaleY;
+        setDragStart({ x: mouseX - element.x, y: mouseY - element.y });
+    } else {
+        setSelectedElementId(null);
+    }
+  }
 
-        const dx = mouseX - dragStart.x;
-        const dy = mouseY - dragStart.y;
-        
-        let newRect = { ...cropRect };
-        
-        if (resizeHandle.includes('l')) {
-            newRect.x += dx;
-            newRect.width -= dx;
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !selectedElementId || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    setElements(prev => prev.map(el => {
+        if (el.id === selectedElementId) {
+            return {
+                ...el,
+                x: mouseX - dragStart.x,
+                y: mouseY - dragStart.y
+            };
         }
-        if (resizeHandle.includes('r')) {
-            newRect.width += dx;
-        }
-        if (resizeHandle.includes('t')) {
-            newRect.y += dy;
-            newRect.height -= dy;
-        }
-        if (resizeHandle.includes('b')) {
-            newRect.height += dy;
-        }
-        if (resizeHandle === 'move') {
-            newRect.x += dx;
-            newRect.y += dy;
-        }
+        return el;
+    }));
+  }
 
-        if (newRect.width < 20) {
-            newRect.width = 20;
-            if (resizeHandle.includes('l')) newRect.x = cropRect.x + cropRect.width - 20;
-        }
-        if (newRect.height < 20) {
-            newRect.height = 20;
-            if (resizeHandle.includes('t')) newRect.y = cropRect.y + cropRect.height - 20;
-        }
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  }
+  
+  const selectedElement = elements.find(el => el.id === selectedElementId);
+  
+  useEffect(() => {
+    if (selectedElement && selectedElement.type === 'text') {
+        setElements(prev => prev.map(el => {
+            if (el.id === selectedElementId && el.type === 'text') {
+                const canvas = canvasRef.current;
+                if(!canvas) return el;
+                const ctx = canvas.getContext('2d');
+                if(!ctx) return el;
+                ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
+                const textMetrics = ctx.measureText(el.text!);
+                
+                return {
+                    ...el,
+                    fontSize,
+                    fontFamily,
+                    textAlign,
+                    fontWeight,
+                    color: textColor,
+                    width: textMetrics.width,
+                    height: fontSize
+                };
+            }
+            return el;
+        }))
+    }
+  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElementId]);
 
-        if (newRect.x < 0) {
-            if(resizeHandle.includes('l')) newRect.width += newRect.x;
-            newRect.x = 0;
-        }
-        if (newRect.y < 0) {
-            if(resizeHandle.includes('t')) newRect.height += newRect.y;
-            newRect.y = 0;
-        }
+  useEffect(() => {
+    if (selectedElement && selectedElement.type === 'shape') {
+        setElements(prev => prev.map(el => {
+            if (el.id === selectedElementId && el.type === 'shape') {
+                return {
+                    ...el,
+                    color: shapeColor,
+                };
+            }
+            return el;
+        }))
+    }
+  }, [shapeColor, selectedElementId])
 
-        if (newRect.x + newRect.width > canvas.width) {
-           newRect.width = canvas.width - newRect.x;
-           if (resizeHandle === 'move') newRect.x = canvas.width - newRect.width;
-        }
-        if (newRect.y + newRect.height > canvas.height) {
-           newRect.height = canvas.height - newRect.y;
-           if (resizeHandle === 'move') newRect.y = canvas.height - newRect.height;
-        }
-
-        setCropRect(newRect);
-        setDragStart({ x: mouseX, y: mouseY });
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-        setResizeHandle(null);
-    };
-
-    const handleApplyCrop = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const { x, y, width, height } = cropRect;
-        const imageData = ctx.getImageData(x, y, width, height);
-
-        const newCanvas = document.createElement('canvas');
-        newCanvas.width = width;
-        newCanvas.height = height;
-        const newCtx = newCanvas.getContext('2d');
-        if (newCtx) {
-            newCtx.putImageData(imageData, 0, 0);
-            const dataUrl = newCanvas.toDataURL('image/png');
-            setFaviconSrc(dataUrl);
-        }
-        setIsCropping(false);
-    };
-
-    const startCropping = () => {
-        setIsCropping(true);
-        const canvas = canvasRef.current;
-        if(canvas) {
-          const initialSize = Math.min(canvas.width, canvas.height) * 0.8;
-           setCropRect({
-            x: (canvas.width - initialSize) / 2,
-            y: (canvas.height - initialSize) / 2,
-            width: initialSize,
-            height: initialSize,
-          });
-        }
-    };
 
   if (isLoading) {
     return (
@@ -344,78 +370,114 @@ export default function EditorPageContent() {
         </div>
     );
   }
-  
-  const canvasDisplaySize = canvasContainerRef.current ? Math.min(canvasContainerRef.current.clientWidth, 400) : 300;
-
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader isEditorPage={true} onSave={handleSave} />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-              <Card>
-                  <CardHeader className="p-4">
-                      <CardTitle className="text-base">Canvas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                      <div className="flex items-center gap-2">
-                           <Label htmlFor="canvas-color" className="sr-only">Background</Label>
-                          <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
-                          <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas} disabled={isCropping}>
-                              <RefreshCw className="mr-2 h-4 w-4" /> New
-                          </Button>
-                      </div>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader className="p-4">
-                      <CardTitle className="text-base">Crop</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                   {isCropping ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button size="sm" variant="destructive" onClick={() => setIsCropping(false)}><X className="mr-1 h-4 w-4" /> Cancel</Button>
-                      <Button size="sm" onClick={handleApplyCrop}><Check className="mr-1 h-4 w-4" /> Apply</Button>
-                    </div>
-                  ) : (
-                    <Button size="sm" className="w-full" variant="secondary" onClick={startCropping}>
-                      <Crop className="mr-2 h-4 w-4" /> Crop
-                    </Button>
-                  )}
-                  </CardContent>
-              </Card>
-            </div>
             <Card>
                 <CardHeader className="p-4">
-                    <CardTitle className="text-base">Drawing</CardTitle>
+                    <CardTitle className="text-base">Canvas</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="draw-color">Color</Label>
-                                <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
-                            </div>
-                            <div>
-                                <Label>Shapes</Label>
-                                <div className="flex justify-start gap-2 mt-1">
-                                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
-                                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="text-input">Text</Label>
-                            <Input id="text-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={3} disabled={isCropping} />
-                            <Button className="w-full" variant="outline" onClick={handleDrawText} disabled={isCropping || !text}>
-                                <Type className="mr-2 h-4 w-4" />
-                                Add Text
-                            </Button>
-                        </div>
+                    <div className="flex items-center gap-2">
+                         <Label htmlFor="canvas-color" className="sr-only">Background</Label>
+                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
+                        <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
+                            <RefreshCw className="mr-2 h-4 w-4" /> New
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Shapes</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                     <div className="flex items-center gap-2">
+                        <Label htmlFor="shape-color">Color</Label>
+                        <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
+                    </div>
+                    <div className="flex justify-start gap-2 mt-1">
+                        <Button variant="outline" size="icon" onClick={() => addShape('square')}><Square /></Button>
+                        <Button variant="outline" size="icon" onClick={() => addShape('circle')}><Circle /></Button>
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Text</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="text-input">Content</Label>
+                            <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} />
+                        </div>
+                        <div className="space-y-2">
+                           <Label htmlFor="text-color">Color</Label>
+                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                        </div>
+                    </div>
+                     <Button className="w-full" variant="outline" onClick={addText} disabled={!textInput}>
+                        <Type className="mr-2 h-4 w-4" />
+                        Add Text
+                    </Button>
+                </CardContent>
+            </Card>
+            
+            {selectedElement?.type === 'text' && (
+             <Card>
+                <CardHeader className="p-4">
+                    <CardTitle className="text-base">Typography</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                     <div>
+                        <Label>Font Family</Label>
+                        <Select value={fontFamily} onValueChange={setFontFamily}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a font" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                            <SelectItem value="Arial">Arial</SelectItem>
+                            <SelectItem value="Verdana">Verdana</SelectItem>
+                            <SelectItem value="Georgia">Georgia</SelectItem>
+                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Font Size: {fontSize}px</Label>
+                        <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={512} step={2}/>
+                    </div>
+                    <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                           <Label>Align</Label>
+                            <div className="flex gap-1">
+                                <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('left')}><AlignLeft className="h-4 w-4"/></Button>
+                                <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter className="h-4 w-4"/></Button>
+                                <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('right')}><AlignRight className="h-4 w-4"/></Button>
+                            </div>
+                         </div>
+                         <div className="flex items-center space-x-2">
+                            <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => setFontWeight(c ? 'bold' : 'normal')} />
+                            <Label htmlFor="font-weight">Bold</Label>
+                        </div>
+                    </div>
+                </CardContent>
+             </Card>
+            )}
+
+            {selectedElementId && (
+                <Button variant="destructive" onClick={deleteSelectedElement}>
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                </Button>
+            )}
+
         </aside>
         <div 
           className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
@@ -433,46 +495,16 @@ export default function EditorPageContent() {
                       linear-gradient(-45deg, transparent 75%, #eee 75%)`,
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    cursor: isDragging ? 'grabbing' : isCropping ? 'crosshair' : 'default',
+                    cursor: isDragging ? 'grabbing' : 'default',
                 }}
                 onMouseDown={handleMouseDown}
             >
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
-                  {isCropping && canvasRef.current && (
-                    <>
-                      {/* Overlay */}
-                      <div className="absolute top-0 left-0 w-full h-full bg-black/50"
-                          style={{
-                              clipPath: `evenodd(
-                                  M 0 0 H ${canvasDisplaySize} V ${canvasDisplaySize} H 0 Z
-                                  M ${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)} ${cropRect.y / (EDITOR_RESOLUTION/canvasDisplaySize)} H ${ (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION/canvasDisplaySize)} V ${(cropRect.y + cropRect.height) / (EDITOR_RESOLUTION/canvasDisplaySize)} H ${cropRect.x/(EDITOR_RESOLUTION/canvasDisplaySize)} Z
-                              )`
-                          }}
-                      />
-                      {/* Border */}
-                      <div className="absolute border-2 border-dashed border-white pointer-events-none"
-                          style={{
-                              left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize),
-                              top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize),
-                              width: cropRect.width / (EDITOR_RESOLUTION / canvasDisplaySize),
-                              height: cropRect.height / (EDITOR_RESOLUTION / canvasDisplaySize),
-                          }}
-                      />
-                      {/* Handles */}
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nwse-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: cropRect.y / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: cropRect.x / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: (cropRect.y + cropRect.height) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nesw-resize' }} />
-                      <div className="absolute w-3 h-3 bg-white border border-gray-500 rounded-full" style={{ left: (cropRect.x + cropRect.width) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, top: (cropRect.y + cropRect.height) / (EDITOR_RESOLUTION / canvasDisplaySize) - 6, cursor: 'nwse-resize' }} />
-
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.width/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, top: cropRect.y / (EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-3 h-1.5 bg-white border-y border-gray-500" style={{ left: `calc(${cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.width/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, top: (cropRect.y + cropRect.height)/(EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, cursor: 'ns-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: cropRect.x / (EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, top: `calc(${cropRect.y/(EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.height/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, cursor: 'ew-resize' }} />
-                      <div className="absolute w-1.5 h-3 bg-white border-x border-gray-500" style={{ left: (cropRect.x + cropRect.width)/(EDITOR_RESOLUTION/canvasDisplaySize) - 1.5, top: `calc(${cropRect.y/(EDITOR_RESOLUTION/canvasDisplaySize)}px + ${cropRect.height/(EDITOR_RESOLUTION/canvasDisplaySize)/2}px - 6px)`, cursor: 'ew-resize' }} />
-                    </>
-                  )}
             </div>
         </div>
       </main>
     </div>
   );
 }
+
+    
