@@ -17,7 +17,7 @@ const GenerateFaviconVariationsInputSchema = z.object({
   faviconDataUri: z
     .string()
     .describe(
-      'A favicon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.' // Corrected typo here
+      "A favicon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   numVariations: z
     .number()
@@ -34,7 +34,7 @@ const GenerateFaviconVariationsOutputSchema = z.object({
       imageDataUri: z
         .string()
         .describe(
-          'A variation of the favicon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: \'data:<mimetype>;base64,<encoded_data>\'.'
+          "A variation of the favicon, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
         ),
     })
   ),
@@ -49,25 +49,33 @@ export async function generateFaviconVariations(
   return generateFaviconVariationsFlow(input);
 }
 
-const generateFaviconVariationsPrompt = ai.definePrompt({
-  name: 'generateFaviconVariationsPrompt',
-  input: {schema: GenerateFaviconVariationsInputSchema},
-  output: {schema: GenerateFaviconVariationsOutputSchema},
-  prompt: `You are an expert favicon designer. Given the following favicon, generate {{numVariations}} variations with subtly altered colors or shapes to provide additional options and spark inspiration.
-
-Original Favicon: {{media url=faviconDataUri}}
-
-Variations:`, // Corrected media url handlebars
-});
-
 const generateFaviconVariationsFlow = ai.defineFlow(
   {
     name: 'generateFaviconVariationsFlow',
     inputSchema: GenerateFaviconVariationsInputSchema,
     outputSchema: GenerateFaviconVariationsOutputSchema,
   },
-  async input => {
-    const {output} = await generateFaviconVariationsPrompt(input);
-    return output!;
+  async (input) => {
+    const variations = await Promise.all(
+      Array.from({ length: input.numVariations }, async (_, i) => {
+        const { media } = await ai.generate({
+          model: 'googleai/gemini-2.0-flash-preview-image-generation',
+          prompt: [
+            {
+              media: { url: input.faviconDataUri },
+            },
+            {
+              text: `You are an expert logo designer. Generate a new, visually appealing favicon based on the provided image. Create a distinct variation by altering colors, shapes, or concepts to provide a fresh alternative. Variation #${i + 1}`,
+            },
+          ],
+          config: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        });
+        return { imageDataUri: media.url };
+      })
+    );
+
+    return { variations };
   }
 );
