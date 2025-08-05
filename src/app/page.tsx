@@ -490,8 +490,8 @@ setShowSizes(false);
 
   const getWebmanifestContent = () => {
     return JSON.stringify({
-        "name": "My Awesome App",
-        "short_name": "AwesomeApp",
+        "name": "Favicon Forge: AI-Powered Favicon Generator",
+        "short_name": "Favicon Forge",
         "icons": [
             {
                 "src": "/android-chrome-192x192.png",
