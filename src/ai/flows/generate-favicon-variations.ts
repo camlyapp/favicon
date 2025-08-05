@@ -65,7 +65,15 @@ const generateFaviconVariationsFlow = ai.defineFlow(
               media: { url: input.faviconDataUri },
             },
             {
-              text: `You are an expert logo designer. Generate a new, visually appealing favicon based on the provided image. Create a distinct variation by altering colors, shapes, or concepts to provide a fresh alternative. Variation #${i + 1}`,
+              text: `You are an expert logo and icon designer. Your task is to generate a new, visually appealing favicon based on the provided image.
+
+                Guidelines:
+                1.  **Maintain Core Identity:** The generated favicon should retain the core concept or subject of the original image, but not be an exact copy.
+                2.  **Create a Distinct Variation:** Introduce significant and creative alterations. This could involve changing the color palette, modifying shapes, simplifying the design, or reinterpreting the concept in a new style (e.g., minimalist, abstract, geometric).
+                3.  **Ensure Clarity:** The final design must be clear and recognizable even at very small sizes (e.g., 16x16 pixels). Avoid overly complex details.
+                4.  **Square Format:** The output must be a square image.
+
+                For this request, create a unique option. This is Variation #${i + 1}.`,
             },
           ],
           config: {
