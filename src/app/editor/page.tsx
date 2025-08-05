@@ -388,25 +388,28 @@ export default function EditorPage() {
                 <CardHeader>
                     <CardTitle className="text-lg">Drawing</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="draw-color">Color</Label>
-                        <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
-                    </div>
-                    <div>
-                        <Label>Shapes</Label>
-                         <div className="flex justify-start gap-2 mt-1">
-                            <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
-                            <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
+                <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="draw-color">Color</Label>
+                                <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
+                            </div>
+                            <div>
+                                <Label>Shapes</Label>
+                                <div className="flex justify-start gap-2 mt-1">
+                                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('square')} disabled={isCropping}><Square /></Button>
+                                    <Button variant="outline" size="icon" onClick={() => handleDrawShape('circle')} disabled={isCropping}><Circle /></Button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <Label htmlFor="text-input">Text</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Input id="text-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={3} disabled={isCropping} />
-                           <Button variant="outline" size="icon" onClick={handleDrawText} disabled={isCropping || !text}>
-                              <Type />
-                           </Button>
+                        <div className="space-y-2">
+                            <Label htmlFor="text-input">Text</Label>
+                            <Input id="text-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={3} disabled={isCropping} />
+                            <Button className="w-full" variant="outline" onClick={handleDrawText} disabled={isCropping || !text}>
+                                <Type className="mr-2 h-4 w-4" />
+                                Add Text
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
@@ -471,5 +474,3 @@ export default function EditorPage() {
     </div>
   );
 }
-
-    
