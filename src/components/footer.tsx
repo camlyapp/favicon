@@ -11,9 +11,6 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Favicon Forge. All Rights Reserved.
           </p>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-             <span>Made with</span> <Heart className="w-4 h-4 text-red-500 fill-current" /> <span>by the Firebase team</span>
-          </div>
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="icon" asChild>
               <Link href="https://github.com/firebase/studio" target="_blank" aria-label="GitHub">
