@@ -8,31 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateVariations } from '@/app/actions';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-    DialogClose
-} from "@/components/ui/dialog";
 import {
     Upload,
     Loader2,
     Sparkles,
     Download,
-    Package,
     Eye,
     X,
-    Copy,
-    Pencil
+    Pencil,
+    Package
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import { AppHeader } from '@/components/header';
 
 const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
@@ -41,94 +28,6 @@ interface GeneratedSize {
   size: number;
   dataUrl: string;
 }
-
-interface ExportDialogProps {
-  isExportDialogOpen: boolean;
-  setIsExportDialogOpen: (isOpen: boolean) => void;
-  faviconSrc: string | null;
-  generatedSizes: GeneratedSize[];
-  handleDownloadZip: () => void;
-  getHtmlCode: () => string;
-  copyToClipboard: (text: string) => void;
-  getWebmanifestContent: () => string;
-  handleDownloadIco: () => void;
-}
-
-const ExportDialog: React.FC<ExportDialogProps> = ({
-  isExportDialogOpen,
-  setIsExportDialogOpen,
-  faviconSrc,
-  handleDownloadZip,
-  getHtmlCode,
-  copyToClipboard,
-  getWebmanifestContent,
-  handleDownloadIco
-}) => (
-   <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-    <DialogTrigger asChild>
-        <Button size="sm" disabled={!faviconSrc}>
-            <Package className="mr-0 sm:mr-2 h-4 w-4" />
-             <span className="hidden sm:inline">Export All</span>
-          </Button>
-    </DialogTrigger>
-    <DialogContent className="sm:max-w-[625px] w-[90vw] rounded-lg">
-      <DialogHeader>
-        <DialogTitle>Export Options</DialogTitle>
-        <DialogDescription>
-          Download your favicons and get the code to add them to your site.
-        </DialogDescription>
-      </DialogHeader>
-       <Tabs defaultValue="zip" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="zip">Download .ZIP</TabsTrigger>
-              <TabsTrigger value="html">HTML Code</TabsTrigger>
-              <TabsTrigger value="manifest">Web Manifest</TabsTrigger>
-          </TabsList>
-          <TabsContent value="zip" className="py-4">
-              <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-8 bg-secondary/50 rounded-lg">
-                  <p className="text-center text-sm sm:text-base text-muted-foreground">Download all generated PNG icons, a `favicon.ico` file, `site.webmanifest`, and an example `index.html` in a single .zip file.</p>
-                   <Button size="lg" onClick={handleDownloadZip}>
-                        <Package className="mr-2 h-4 w-4" />
-                        Download .ZIP
-                      </Button>
-              </div>
-          </TabsContent>
-          <TabsContent value="html" className="py-4">
-               <div className="space-y-4">
-                   <p className="text-sm text-muted-foreground">Copy and paste this code into the `&lt;head&gt;` of your HTML document.</p>
-                  <div className="relative">
-                      <Textarea readOnly value={getHtmlCode()} className="h-40 font-mono text-xs bg-muted/50" />
-                      <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getHtmlCode())}>
-                          <Copy className="h-4 w-4"/>
-                      </Button>
-                  </div>
-               </div>
-          </TabsContent>
-          <TabsContent value="manifest" className="py-4">
-               <div className="space-y-4">
-                   <p className="text-sm text-muted-foreground">This is the content for your `site.webmanifest` file.</p>
-                   <div className="relative">
-                      <Textarea readOnly value={getWebmanifestContent()} className="h-64 font-mono text-xs bg-muted/50" />
-                      <Button size="icon" variant="ghost" className="absolute top-2 right-2" onClick={() => copyToClipboard(getWebmanifestContent())}>
-                          <Copy className="h-4 w-4"/>
-                      </Button>
-                   </div>
-               </div>
-          </TabsContent>
-      </Tabs>
-      <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-          <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc} className="w-full sm:w-auto">
-              <Download className="mr-2 h-4 w-4" /> Download favicon.ico
-          </Button>
-          <DialogClose asChild>
-               <Button type="button" variant="outline" className="w-full sm:w-auto">
-                  Close
-              </Button>
-          </DialogClose>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
 
 export default function HomePageContent() {
   const { toast } = useToast();
@@ -457,14 +356,12 @@ setShowSizes(false);
             onGenerateVariations={onGenerateVariations}
             isPending={isPending}
             faviconSrc={faviconSrc}
-            isExportDialogOpen={isExportDialogOpen}
-            setIsExportDialogOpen={setIsExportDialogOpen}
             handleDownloadZip={handleDownloadZip}
             getHtmlCode={getHtmlCode}
             copyToClipboard={copyToClipboard}
             getWebmanifestContent={getWebmanifestContent}
             handleDownloadIco={handleDownloadIco}
-            ExportDialog={ExportDialog}
+            generatedSizes={generatedSizes}
         />
 
       <main className="flex-1 grid grid-cols-1">
@@ -554,3 +451,5 @@ setShowSizes(false);
     </>
   );
 }
+
+    
