@@ -167,7 +167,7 @@ export function AppHeader({
                     </Button>
                 ) : (
                     <Link href="/" className="flex items-center gap-2">
-                         <Image src="/logo.svg" alt="Camly logo" width={24} height={24} />
+                         <Image src="/camly.png" alt="Camly logo" width={24} height={24} />
                         <h1 className="text-xl font-bold hidden sm:inline-block">Favicon</h1>
                     </Link>
                 )}
