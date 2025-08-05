@@ -34,6 +34,8 @@ import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { AppHeader } from '@/components/header';
+import { SeoSection } from '@/components/seo-section';
+
 
 const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
 
@@ -551,8 +553,7 @@ setShowSizes(false);
             </div>
         </div>
       </main>
+      <SeoSection />
     </div>
   );
 }
-
-    
