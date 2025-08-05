@@ -76,7 +76,7 @@ export default function EditorPage() {
         img.onload = () => {
             const container = canvasContainerRef.current;
             if (container && ctx) {
-                 const size = Math.min(container.clientWidth, container.clientHeight, 512);
+                 const size = Math.min(container.clientWidth, container.clientHeight, 400);
                  canvas.width = size;
                  canvas.height = size;
                  ctx.fillStyle = canvasColor;
@@ -127,7 +127,7 @@ export default function EditorPage() {
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const size = Math.min(canvas.parentElement?.clientWidth || 512, 512);
+      const size = Math.min(canvas.parentElement?.clientWidth || 400, 400);
       canvas.width = size;
       canvas.height = size;
       ctx.fillStyle = canvasColor;
@@ -354,9 +354,9 @@ export default function EditorPage() {
         </Button>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-0">
         <div 
-          className="md:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
+          className="flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
@@ -411,7 +411,7 @@ export default function EditorPage() {
             </div>
         </div>
 
-        <aside className="md:col-span-1 border-l border-border flex flex-col p-4 space-y-4 overflow-y-auto">
+        <aside className="border-l border-border flex flex-col p-4 space-y-4 overflow-y-auto">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">Canvas</CardTitle>
@@ -477,5 +477,3 @@ export default function EditorPage() {
     </div>
   );
 }
-
-    
