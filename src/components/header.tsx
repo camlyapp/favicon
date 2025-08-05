@@ -56,7 +56,7 @@ export function AppHeader({
                             <path d="M148,224,82.4,140a32.1,32.1,0,0,1,0-44.8L148,16" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="24"></path>
                             <line x1="104" y1="128" x2="240" y2="128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="24"></line>
                         </svg>
-                        <h1 className="text-xl font-bold hidden sm:inline-block">Favicon Forge</h1>
+                        <h1 className="text-xl font-bold hidden sm:inline-block">Favicon</h1>
                     </Link>
                 )}
                  {isEditorPage && <h1 className="text-xl font-bold">Editor</h1>}
@@ -90,5 +90,3 @@ export function AppHeader({
         </header>
     );
 }
-
-    

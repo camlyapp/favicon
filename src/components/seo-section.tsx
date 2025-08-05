@@ -10,7 +10,7 @@ export function SeoSection() {
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Elevate Your Brand with the Perfect Favicon</h2>
             <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-             A favicon is more than just an icon; it's a vital part of your brand identity. It builds trust, improves user experience in browser tabs and bookmarks, and boosts your site's professional appearance in search results. Favicon Forge gives you the tools to create a memorable, high-resolution icon that stands out and makes a lasting impression.
+             A favicon is more than just an icon; it's a vital part of your brand identity. It builds trust, improves user experience in browser tabs and bookmarks, and boosts your site's professional appearance in search results. This app gives you the tools to create a memorable, high-resolution icon that stands out and makes a lasting impression.
             </p>
           </div>
         </div>
