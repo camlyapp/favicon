@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
     Upload,
@@ -166,11 +167,7 @@ export function AppHeader({
                     </Button>
                 ) : (
                     <Link href="/" className="flex items-center gap-2">
-                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="h-6 w-6">
-                            <rect width="256" height="256" fill="none"></rect>
-                            <path d="M148,224,82.4,140a32.1,32.1,0,0,1,0-44.8L148,16" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="24"></path>
-                            <line x1="104" y1="128" x2="240" y2="128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="24"></line>
-                        </svg>
+                         <Image src="/logo.svg" alt="Camly logo" width={24} height={24} />
                         <h1 className="text-xl font-bold hidden sm:inline-block">Favicon</h1>
                     </Link>
                 )}
