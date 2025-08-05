@@ -11,18 +11,17 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
-    ArrowLeft,
     Save,
     Square,
     Circle,
     Type,
     RefreshCw,
     Loader2,
-    Palette,
     Crop,
     Check,
     X
 } from 'lucide-react';
+import { AppHeader } from '@/components/header';
 
 interface Rect {
   x: number;
@@ -30,7 +29,6 @@ interface Rect {
   width: number;
   height: number;
 }
-
 
 export default function EditorPage() {
   const router = useRouter();
@@ -44,8 +42,6 @@ export default function EditorPage() {
   const [drawColor, setDrawColor] = useState('#A050C3');
   const [text, setText] = useState('A');
 
-
-  // Cropping state
   const [isCropping, setIsCropping] = useState(false);
   const [cropRect, setCropRect] = useState<Rect>({ x: 50, y: 50, width: 200, height: 200 });
   const [isDragging, setIsDragging] = useState(false);
@@ -67,7 +63,6 @@ export default function EditorPage() {
     setIsLoading(false);
   }, [router, toast]);
 
-  // Draw initial image to canvas
   useEffect(() => {
     if (faviconSrc && canvasRef.current) {
         const canvas = canvasRef.current;
@@ -112,7 +107,6 @@ export default function EditorPage() {
     }
   }, [faviconSrc, canvasColor, isCropping]);
 
-
   const handleSave = () => {
     if (canvasRef.current) {
         const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -136,7 +130,6 @@ export default function EditorPage() {
       setFaviconSrc(dataUrl);
     }
   };
-
 
   const handleDrawShape = (shape: 'square' | 'circle') => {
     const canvas = canvasRef.current;
@@ -179,7 +172,6 @@ export default function EditorPage() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Adjust font size dynamically based on text length
     const baseSize = canvas.width * 0.4;
     const fontSize = Math.min(baseSize, baseSize / (text.length / 1.5) );
     ctx.font = `bold ${fontSize}px Inter, sans-serif`;
@@ -213,7 +205,6 @@ export default function EditorPage() {
         if (mouseX > x + handleSize && mouseX < x + width - handleSize && mouseY > y + height - handleSize && mouseY < y + height + handleSize) return 'b';
         if (mouseX > x - handleSize && mouseX < x + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'l';
         if (mouseX > x + width - handleSize && mouseX < x + width + handleSize && mouseY > y + handleSize && mouseY < y + height - handleSize) return 'r';
-
 
         if (mouseX > x && mouseX < x + width && mouseY > y && mouseY < y + height) return 'move';
         return null;
@@ -333,7 +324,6 @@ export default function EditorPage() {
         }
     };
 
-
   if (isLoading) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -344,16 +334,7 @@ export default function EditorPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-xl font-bold">Editor</h1>
-        <Button size="sm" onClick={handleSave}>
-          <Save className="mr-2 h-4 w-4" /> Save
-        </Button>
-      </header>
-
+      <AppHeader isEditorPage={true} onSave={handleSave} />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
             <Card>
@@ -370,7 +351,6 @@ export default function EditorPage() {
                     </div>
                 </CardContent>
             </Card>
-
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">Crop</CardTitle>
@@ -388,7 +368,6 @@ export default function EditorPage() {
                 )}
                 </CardContent>
             </Card>
-
             <Card>
                 <CardHeader>
                     <CardTitle className="text-lg">Drawing</CardTitle>
@@ -472,7 +451,6 @@ export default function EditorPage() {
                   )}
             </div>
         </div>
-
       </main>
     </div>
   );

@@ -6,9 +6,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { handleGenerateVariations } from '@/app/actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,33 +20,22 @@ import {
     DialogClose
 } from "@/components/ui/dialog";
 import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
-import {
-  Upload,
-  RefreshCw,
-  Loader2,
-  Sparkles,
-  Download,
-  Package,
-  Paintbrush,
-  Eye,
-  Settings,
-  ChevronUp,
-  X,
-  Copy,
-  Pencil
+    Upload,
+    Loader2,
+    Sparkles,
+    Download,
+    Package,
+    Eye,
+    X,
+    Copy,
+    Pencil
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-
+import { AppHeader } from '@/components/header';
 
 const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
-
 
 interface GeneratedSize {
   size: number;
@@ -67,7 +53,6 @@ interface ExportDialogProps {
   getWebmanifestContent: () => string;
   handleDownloadIco: () => void;
 }
-
 
 const ExportDialog: React.FC<ExportDialogProps> = ({
   isExportDialogOpen,
@@ -323,16 +308,11 @@ setShowSizes(false);
   };
   
   const handleDownloadZip = async () => {
-    // Ensure sizes are generated before zipping
-    if (generatedSizes.length === 0) {
+    if (generatedSizes.length === 0 && faviconSrc) {
        await handleGenerateAllSizes();
-       // handleGenerateAllSizes is async and updates state. We need to wait for the next render cycle.
-       // A simple but effective way is a short timeout.
        await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    // After attempting to generate, check again if sizes are available.
-    // The state update from handleGenerateAllSizes might not be reflected immediately, so we pass the freshly generated sizes.
     let currentGeneratedSizes = generatedSizes;
     if (currentGeneratedSizes.length === 0 && faviconSrc) {
         try {
@@ -353,7 +333,6 @@ setShowSizes(false);
         }
     }
 
-
     if (currentGeneratedSizes.length === 0) {
         toast({
             title: 'No sizes generated',
@@ -362,7 +341,6 @@ setShowSizes(false);
         });
         return;
     }
-
 
     const zip = new JSZip();
 
@@ -392,7 +370,6 @@ setShowSizes(false);
 
     zip.file('site.webmanifest', getWebmanifestContent());
     zip.file('index.html', getFullHtmlPage());
-
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
@@ -459,6 +436,10 @@ setShowSizes(false);
     });
   }
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
        <input
@@ -469,41 +450,24 @@ setShowSizes(false);
           accept="image/png, image/jpeg, image/svg+xml, image/webp"
         />
 
-      <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
-        <div className="flex items-center gap-3">
-            <Button variant="ghost" size="lg" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" /> Upload Image
-            </Button>
-        </div>
-        <div className="flex items-center gap-2">
-            <Button onClick={handleGoToEditor} disabled={!faviconSrc} variant="outline" size="sm">
-              <Pencil className="mr-0 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </Button>
-            <Button onClick={handleGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
-              <Eye className="mr-0 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Preview Sizes</span>
-            </Button>
-             <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} variant="outline" size="sm">
-                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                <span className="hidden sm:inline">Generate Variations</span>
-              </Button>
-            <ExportDialog
-                isExportDialogOpen={isExportDialogOpen}
-                setIsExportDialogOpen={setIsExportDialogOpen}
-                faviconSrc={faviconSrc}
-                generatedSizes={generatedSizes}
-                handleDownloadZip={handleDownloadZip}
-                getHtmlCode={getHtmlCode}
-                copyToClipboard={copyToClipboard}
-                getWebmanifestContent={getWebmanifestContent}
-                handleDownloadIco={handleDownloadIco}
-            />
-        </div>
-      </header>
+        <AppHeader
+            onUploadClick={handleUploadClick}
+            onGoToEditor={handleGoToEditor}
+            onGenerateAllSizes={handleGenerateAllSizes}
+            onGenerateVariations={onGenerateVariations}
+            isPending={isPending}
+            faviconSrc={faviconSrc}
+            isExportDialogOpen={isExportDialogOpen}
+            setIsExportDialogOpen={setIsExportDialogOpen}
+            handleDownloadZip={handleDownloadZip}
+            getHtmlCode={getHtmlCode}
+            copyToClipboard={copyToClipboard}
+            getWebmanifestContent={getWebmanifestContent}
+            handleDownloadIco={handleDownloadIco}
+            ExportDialog={ExportDialog}
+        />
 
       <main className="flex-1 grid grid-cols-1">
-        {/* Right Panel: Canvas & Previews */}
         <div className="flex flex-col bg-muted/20 relative">
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
@@ -587,14 +551,8 @@ setShowSizes(false);
             </div>
         </div>
       </main>
-      <style jsx>{`
-        .accordion-chevron {
-            transition: transform 0.2s ease-in-out;
-        }
-        [data-state=open] > button > div > .accordion-chevron {
-            transform: rotate(180deg);
-        }
-      `}</style>
     </div>
   );
 }
+
+    
