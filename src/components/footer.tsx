@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Github, Twitter, Dribbble, Heart } from 'lucide-react';
@@ -9,7 +10,7 @@ export function Footer() {
       <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Favicon. All Rights Reserved.
+            &copy; {new Date().getFullYear()} Camly. All Rights Reserved.
           </p>
           <div className="flex items-center space-x-2">
             <Button variant="ghost" size="icon" asChild>
