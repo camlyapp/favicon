@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
     Save,
@@ -17,18 +16,13 @@ import {
     Type,
     RefreshCw,
     Loader2,
-    Crop,
-    Check,
-    X,
     Trash2,
     AlignCenter,
     AlignLeft,
     AlignRight,
     Bold,
-    Layers,
     ArrowUp,
     ArrowDown,
-    Palette
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -40,14 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from '@/components/ui/switch';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 
 interface CanvasElement {
     id: string;
@@ -228,7 +216,7 @@ export default function EditorPageContent() {
             setFontWeight(selectedElement.fontWeight ?? 'bold');
         }
     }
-  }, [selectedElementId]);
+  }, [selectedElementId, selectedElement]);
 
   const updateSelectedElement = (props: Partial<CanvasElement>) => {
     if (!selectedElementId) return;
@@ -392,7 +380,7 @@ export default function EditorPageContent() {
             height: fontSize
         });
     }
-  }, [fontSize, fontFamily, textAlign, fontWeight, textColor]);
+  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElement]);
 
   useEffect(() => {
     if (selectedElement?.type === 'shape') {
@@ -402,11 +390,11 @@ export default function EditorPageContent() {
             strokeWidth: strokeWidth,
         });
     }
-  }, [shapeColor, strokeColor, strokeWidth])
+  }, [shapeColor, strokeColor, strokeWidth, selectedElement]);
 
   useEffect(() => {
     if(selectedElementId) updateSelectedElement({ opacity: elementOpacity })
-  }, [elementOpacity]);
+  }, [elementOpacity, selectedElementId]);
 
   const moveLayer = (direction: 'up' | 'down') => {
     if (!selectedElementId) return;
@@ -439,156 +427,169 @@ export default function EditorPageContent() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader isEditorPage={true} onSave={handleSave} />
       <main className="flex-1 grid grid-cols-3 gap-0">
-        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-base">Canvas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="flex items-center gap-2">
-                             <Label htmlFor="canvas-color" className="sr-only">Background</Label>
-                            <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
-                            <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
-                                <RefreshCw className="mr-2 h-4 w-4" /> New
-                            </Button>
+        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-2 overflow-y-auto">
+             <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
+                <AccordionItem value="item-1">
+                    <AccordionTrigger className="p-4 text-base font-semibold">Canvas & Shapes</AccordionTrigger>
+                    <AccordionContent className="p-0">
+                        <div className="grid grid-cols-2 gap-4 p-4 pt-0">
+                            <Card className="col-span-1">
+                                <CardHeader className="p-4">
+                                    <CardTitle className="text-base">Canvas</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0">
+                                    <div className="flex items-center gap-2">
+                                         <Label htmlFor="canvas-color" className="sr-only">Background</Label>
+                                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
+                                        <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
+                                            <RefreshCw className="mr-2 h-4 w-4" /> New
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            <Card className="col-span-1">
+                                <CardHeader className="p-4">
+                                    <CardTitle className="text-base">Shapes</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0">
+                                    <div className="flex justify-start gap-2 mt-1">
+                                        <Button variant="outline" size="icon" onClick={() => addShape('square')}><Square /></Button>
+                                        <Button variant="outline" size="icon" onClick={() => addShape('circle')}><Circle /></Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-base">Shapes</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <div className="flex justify-start gap-2 mt-1">
-                            <Button variant="outline" size="icon" onClick={() => addShape('square')}><Square /></Button>
-                            <Button variant="outline" size="icon" onClick={() => addShape('circle')}><Circle /></Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-            
-            <Card>
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Text</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="text-input">Content</Label>
-                            <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} />
-                        </div>
-                         <div className="space-y-2">
-                           <Label htmlFor="text-color">Color</Label>
-                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
-                        </div>
-                    </div>
-                     <Button className="w-full" variant="outline" onClick={addText} disabled={!textInput}>
-                        <Type className="mr-2 h-4 w-4" />
-                        Add Text
-                    </Button>
-                </CardContent>
-            </Card>
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-2">
+                    <AccordionTrigger className="p-4 text-base font-semibold">Text Tools</AccordionTrigger>
+                    <AccordionContent>
+                        <Card className="border-0 shadow-none">
+                            <CardContent className="p-4 pt-0 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="text-input">Content</Label>
+                                        <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} />
+                                    </div>
+                                     <div className="space-y-2">
+                                       <Label htmlFor="text-color">Color</Label>
+                                        <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                    </div>
+                                </div>
+                                 <Button className="w-full" variant="outline" onClick={addText} disabled={!textInput}>
+                                    <Type className="mr-2 h-4 w-4" />
+                                    Add Text
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </AccordionContent>
+                </AccordionItem>
 
-             {selectedElement?.type === 'shape' && (
-                <Card>
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-base">Shape Properties</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-4">
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="shape-color">Fill Color</Label>
-                                <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="stroke-color">Border Color</Label>
-                                <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
-                            </div>
-                        </div>
-                        <div>
-                            <Label>Border Width: {strokeWidth}px</Label>
-                            <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} min={0} max={50} step={1}/>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-            
-            {selectedElement?.type === 'text' && (
-             <Card>
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Typography</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                         <div>
-                            <Label>Font Family</Label>
-                            <Select value={fontFamily} onValueChange={setFontFamily}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a font" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
-                                <SelectItem value="Arial">Arial</SelectItem>
-                                <SelectItem value="Verdana">Verdana</SelectItem>
-                                <SelectItem value="Georgia">Georgia</SelectItem>
-                                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                              </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                           <Label htmlFor="text-color-2">Color</Label>
-                            <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
-                        </div>
-                    </div>
-                    <div>
-                        <Label>Font Size: {fontSize}px</Label>
-                        <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={512} step={2}/>
-                    </div>
-                    <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-2">
-                           <Label>Align</Label>
-                            <div className="flex gap-1">
-                                <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('left')}><AlignLeft className="h-4 w-4"/></Button>
-                                <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter className="h-4 w-4"/></Button>
-                                <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('right')}><AlignRight className="h-4 w-4"/></Button>
-                            </div>
-                         </div>
-                         <div className="flex items-center space-x-2">
-                            <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => setFontWeight(c ? 'bold' : 'normal')} />
-                            <Label htmlFor="font-weight">Bold</Label>
-                        </div>
-                    </div>
-                </CardContent>
-             </Card>
-            )}
+                 {selectedElement?.type === 'shape' && (
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger className="p-4 text-base font-semibold">Shape Properties</AccordionTrigger>
+                        <AccordionContent>
+                             <Card className="border-0 shadow-none">
+                                <CardContent className="p-4 pt-0 space-y-4">
+                                     <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="shape-color">Fill Color</Label>
+                                            <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="stroke-color">Border Color</Label>
+                                            <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label>Border Width: {strokeWidth}px</Label>
+                                        <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} min={0} max={50} step={1}/>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </AccordionContent>
+                    </AccordionItem>
+                )}
+                
+                {selectedElement?.type === 'text' && (
+                 <AccordionItem value="item-4">
+                    <AccordionTrigger className="p-4 text-base font-semibold">Typography</AccordionTrigger>
+                    <AccordionContent>
+                        <Card className="border-0 shadow-none">
+                            <CardContent className="p-4 pt-0 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <Label>Font Family</Label>
+                                        <Select value={fontFamily} onValueChange={setFontFamily}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select a font" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                                            <SelectItem value="Arial">Arial</SelectItem>
+                                            <SelectItem value="Verdana">Verdana</SelectItem>
+                                            <SelectItem value="Georgia">Georgia</SelectItem>
+                                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                       <Label htmlFor="text-color-2">Color</Label>
+                                        <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Font Size: {fontSize}px</Label>
+                                    <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={512} step={2}/>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                     <div className="flex items-center gap-2">
+                                       <Label>Align</Label>
+                                        <div className="flex gap-1">
+                                            <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('left')}><AlignLeft className="h-4 w-4"/></Button>
+                                            <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter className="h-4 w-4"/></Button>
+                                            <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('right')}><AlignRight className="h-4 w-4"/></Button>
+                                        </div>
+                                     </div>
+                                     <div className="flex items-center space-x-2">
+                                        <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => setFontWeight(c ? 'bold' : 'normal')} />
+                                        <Label htmlFor="font-weight">Bold</Label>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </AccordionContent>
+                 </AccordionItem>
+                )}
 
-            {selectedElementId && selectedElement?.type !== 'image' && (
-                <Card>
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-base">Element Properties</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-4">
-                         <div>
-                            <Label>Opacity: {Math.round(elementOpacity * 100)}%</Label>
-                            <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} min={0} max={1} step={0.01}/>
-                        </div>
+                {selectedElementId && selectedElement?.type !== 'image' && (
+                    <AccordionItem value="item-5">
+                        <AccordionTrigger className="p-4 text-base font-semibold">Element Properties</AccordionTrigger>
+                        <AccordionContent>
+                             <Card className="border-0 shadow-none">
+                                <CardContent className="p-4 pt-0 space-y-4">
+                                     <div>
+                                        <Label>Opacity: {Math.round(elementOpacity * 100)}%</Label>
+                                        <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} min={0} max={1} step={0.01}/>
+                                    </div>
 
-                         <div className="space-y-2">
-                            <Label>Layer</Label>
-                            <div className="flex gap-2">
-                                <Button className="w-full" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-4 w-4"/> Send Backward</Button>
-                                <Button className="w-full" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-4 w-4"/> Bring Forward</Button>
-                            </div>
-                        </div>
+                                     <div className="space-y-2">
+                                        <Label>Layer</Label>
+                                        <div className="flex gap-2">
+                                            <Button className="w-full" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-4 w-4"/> Send Backward</Button>
+                                            <Button className="w-full" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-4 w-4"/> Bring Forward</Button>
+                                        </div>
+                                    </div>
 
-                        <Button variant="destructive" onClick={deleteSelectedElement} className="w-full">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-
+                                    <Button variant="destructive" onClick={deleteSelectedElement} className="w-full">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </AccordionContent>
+                    </AccordionItem>
+                )}
+            </Accordion>
         </aside>
         <div 
           className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
@@ -617,5 +618,3 @@ export default function EditorPageContent() {
     </div>
   );
 }
-
-    
