@@ -36,7 +36,7 @@ export async function handleGenerateVariations(formData: FormData) {
     if (e instanceof Error) {
         errorMessage = e.message;
         if (e.message.includes('API key')) {
-            errorMessage = 'The Gemini API key is not configured correctly. Please check your environment variables.'
+            errorMessage = 'The Gemini API key is not configured correctly. Please check your environment variables in your hosting provider.'
         }
     }
     return { error: `An unexpected error occurred: ${errorMessage}` };
