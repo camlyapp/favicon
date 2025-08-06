@@ -24,7 +24,11 @@ import {
     AlignCenter,
     AlignLeft,
     AlignRight,
-    Bold
+    Bold,
+    Layers,
+    ArrowUp,
+    ArrowDown,
+    Palette
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -60,6 +64,9 @@ interface CanvasElement {
     textAlign?: 'left' | 'center' | 'right';
     fontWeight?: 'normal' | 'bold';
     img?: HTMLImageElement;
+    opacity?: number;
+    strokeWidth?: number;
+    strokeColor?: string;
 }
 
 
@@ -89,7 +96,12 @@ export default function EditorPageContent() {
   const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('bold');
 
   const [shapeColor, setShapeColor] = useState('#A050C3');
+  const [strokeColor, setStrokeColor] = useState('#000000');
+  const [strokeWidth, setStrokeWidth] = useState(0);
 
+  const [elementOpacity, setElementOpacity] = useState(1);
+  
+  const selectedElement = elements.find(el => el.id === selectedElementId);
 
   const renderCanvas = () => {
     const canvas = canvasRef.current;
@@ -103,6 +115,8 @@ export default function EditorPageContent() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     elements.forEach(el => {
+        ctx.globalAlpha = el.opacity ?? 1;
+
         if(el.type === 'image' && el.img) {
              const imgAspectRatio = el.img.width / el.img.height;
              let drawWidth = canvas.width;
@@ -120,12 +134,22 @@ export default function EditorPageContent() {
              ctx.drawImage(el.img, xOffset, yOffset, drawWidth, drawHeight);
         } else if (el.type === 'shape' && el.color && el.shape) {
             ctx.fillStyle = el.color;
+             if (el.strokeWidth && el.strokeWidth > 0 && el.strokeColor) {
+                ctx.strokeStyle = el.strokeColor;
+                ctx.lineWidth = el.strokeWidth;
+            } else {
+                ctx.strokeStyle = 'transparent';
+                ctx.lineWidth = 0;
+            }
+
             if (el.shape === 'square') {
                 ctx.fillRect(el.x, el.y, el.width, el.height);
+                if (el.strokeWidth && el.strokeWidth > 0) ctx.strokeRect(el.x, el.y, el.width, el.height);
             } else if (el.shape === 'circle') {
                 ctx.beginPath();
                 ctx.arc(el.x + el.width/2, el.y + el.height/2, el.width/2, 0, 2 * Math.PI, false);
                 ctx.fill();
+                if (el.strokeWidth && el.strokeWidth > 0) ctx.stroke();
             }
         } else if (el.type === 'text' && el.text && el.color && el.fontSize && el.fontFamily) {
             ctx.fillStyle = el.color;
@@ -148,6 +172,8 @@ export default function EditorPageContent() {
             ctx.lineWidth = 4;
             ctx.strokeRect(el.x-2, el.y-2, el.width+4, el.height+4);
         }
+
+        ctx.globalAlpha = 1; // Reset for next element
     });
   }
 
@@ -165,7 +191,8 @@ export default function EditorPageContent() {
                 y: 0,
                 width: size,
                 height: size,
-                img: img
+                img: img,
+                opacity: 1,
              };
             setElements([newImageElement]);
         };
@@ -185,6 +212,29 @@ export default function EditorPageContent() {
         renderCanvas();
     }
   }, [elements, canvasColor, selectedElementId]);
+
+  useEffect(() => {
+    if (selectedElement) {
+        setElementOpacity(selectedElement.opacity ?? 1);
+        if (selectedElement.type === 'shape') {
+            setShapeColor(selectedElement.color ?? '#A050C3');
+            setStrokeColor(selectedElement.strokeColor ?? '#000000');
+            setStrokeWidth(selectedElement.strokeWidth ?? 0);
+        } else if (selectedElement.type === 'text') {
+            setTextColor(selectedElement.color ?? '#A050C3');
+            setFontFamily(selectedElement.fontFamily ?? 'Space Grotesk');
+            setFontSize(selectedElement.fontSize ?? 128);
+            setTextAlign(selectedElement.textAlign ?? 'center');
+            setFontWeight(selectedElement.fontWeight ?? 'bold');
+        }
+    }
+  }, [selectedElementId]);
+
+  const updateSelectedElement = (props: Partial<CanvasElement>) => {
+    if (!selectedElementId) return;
+    setElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, ...props } : el));
+  };
+
 
   const handleSave = () => {
     if (canvasRef.current) {
@@ -215,6 +265,9 @@ export default function EditorPageContent() {
         width: size,
         height: size,
         color: shapeColor,
+        opacity: 1,
+        strokeColor: '#000000',
+        strokeWidth: 0,
     };
     setElements(prev => [...prev, newShape]);
     setSelectedElementId(newShape.id);
@@ -245,7 +298,8 @@ export default function EditorPageContent() {
         fontFamily: fontFamily,
         textAlign: textAlign,
         fontWeight: fontWeight,
-        color: textColor
+        color: textColor,
+        opacity: 1,
     };
     setElements(prev => [...prev, newText]);
     setSelectedElementId(newText.id);
@@ -319,48 +373,58 @@ export default function EditorPageContent() {
     setIsDragging(false);
   }
   
-  const selectedElement = elements.find(el => el.id === selectedElementId);
-  
   useEffect(() => {
-    if (selectedElement && selectedElement.type === 'text') {
-        setElements(prev => prev.map(el => {
-            if (el.id === selectedElementId && el.type === 'text') {
-                const canvas = canvasRef.current;
-                if(!canvas) return el;
-                const ctx = canvas.getContext('2d');
-                if(!ctx) return el;
-                ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
-                const textMetrics = ctx.measureText(el.text!);
-                
-                return {
-                    ...el,
-                    fontSize,
-                    fontFamily,
-                    textAlign,
-                    fontWeight,
-                    color: textColor,
-                    width: textMetrics.width,
-                    height: fontSize
-                };
-            }
-            return el;
-        }))
+    if (selectedElement?.type === 'text') {
+        const canvas = canvasRef.current;
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+        ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
+        const textMetrics = ctx.measureText(selectedElement.text!);
+        
+        updateSelectedElement({
+            fontSize,
+            fontFamily,
+            textAlign,
+            fontWeight,
+            color: textColor,
+            width: textMetrics.width,
+            height: fontSize
+        });
     }
-  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElementId]);
+  }, [fontSize, fontFamily, textAlign, fontWeight, textColor]);
 
   useEffect(() => {
-    if (selectedElement && selectedElement.type === 'shape') {
-        setElements(prev => prev.map(el => {
-            if (el.id === selectedElementId && el.type === 'shape') {
-                return {
-                    ...el,
-                    color: shapeColor,
-                };
-            }
-            return el;
-        }))
+    if (selectedElement?.type === 'shape') {
+        updateSelectedElement({
+            color: shapeColor,
+            strokeColor: strokeColor,
+            strokeWidth: strokeWidth,
+        });
     }
-  }, [shapeColor, selectedElementId])
+  }, [shapeColor, strokeColor, strokeWidth])
+
+  useEffect(() => {
+    if(selectedElementId) updateSelectedElement({ opacity: elementOpacity })
+  }, [elementOpacity]);
+
+  const moveLayer = (direction: 'up' | 'down') => {
+    if (!selectedElementId) return;
+    
+    setElements(prev => {
+        const newElements = [...prev];
+        const index = newElements.findIndex(el => el.id === selectedElementId);
+        if (index === -1) return newElements;
+
+        if (direction === 'down' && index > 0 && newElements[index-1].type !== 'image') {
+            [newElements[index], newElements[index-1]] = [newElements[index-1], newElements[index]];
+        } else if (direction === 'up' && index < newElements.length - 1) {
+            [newElements[index], newElements[index+1]] = [newElements[index+1], newElements[index]];
+        }
+        
+        return newElements;
+    });
+  }
 
 
   if (isLoading) {
@@ -376,36 +440,33 @@ export default function EditorPageContent() {
       <AppHeader isEditorPage={true} onSave={handleSave} />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-4 overflow-y-auto">
-            <Card>
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Canvas</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                    <div className="flex items-center gap-2">
-                         <Label htmlFor="canvas-color" className="sr-only">Background</Label>
-                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
-                        <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
-                            <RefreshCw className="mr-2 h-4 w-4" /> New
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader className="p-4">
-                    <CardTitle className="text-base">Shapes</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
-                     <div className="flex items-center gap-2">
-                        <Label htmlFor="shape-color">Color</Label>
-                        <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer mt-1" />
-                    </div>
-                    <div className="flex justify-start gap-2 mt-1">
-                        <Button variant="outline" size="icon" onClick={() => addShape('square')}><Square /></Button>
-                        <Button variant="outline" size="icon" onClick={() => addShape('circle')}><Circle /></Button>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="grid grid-cols-2 gap-4">
+                <Card>
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-base">Canvas</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="flex items-center gap-2">
+                             <Label htmlFor="canvas-color" className="sr-only">Background</Label>
+                            <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
+                            <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
+                                <RefreshCw className="mr-2 h-4 w-4" /> New
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-base">Shapes</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <div className="flex justify-start gap-2 mt-1">
+                            <Button variant="outline" size="icon" onClick={() => addShape('square')}><Square /></Button>
+                            <Button variant="outline" size="icon" onClick={() => addShape('circle')}><Circle /></Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
             
             <Card>
                 <CardHeader className="p-4">
@@ -417,7 +478,7 @@ export default function EditorPageContent() {
                             <Label htmlFor="text-input">Content</Label>
                             <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} />
                         </div>
-                        <div className="space-y-2">
+                         <div className="space-y-2">
                            <Label htmlFor="text-color">Color</Label>
                             <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
                         </div>
@@ -428,6 +489,30 @@ export default function EditorPageContent() {
                     </Button>
                 </CardContent>
             </Card>
+
+             {selectedElement?.type === 'shape' && (
+                <Card>
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-base">Shape Properties</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-4">
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="shape-color">Fill Color</Label>
+                                <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="stroke-color">Border Color</Label>
+                                <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                            </div>
+                        </div>
+                        <div>
+                            <Label>Border Width: {strokeWidth}px</Label>
+                            <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} min={0} max={50} step={1}/>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
             
             {selectedElement?.type === 'text' && (
              <Card>
@@ -435,20 +520,26 @@ export default function EditorPageContent() {
                     <CardTitle className="text-base">Typography</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-4">
-                     <div>
-                        <Label>Font Family</Label>
-                        <Select value={fontFamily} onValueChange={setFontFamily}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a font" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
-                            <SelectItem value="Arial">Arial</SelectItem>
-                            <SelectItem value="Verdana">Verdana</SelectItem>
-                            <SelectItem value="Georgia">Georgia</SelectItem>
-                            <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                         <div>
+                            <Label>Font Family</Label>
+                            <Select value={fontFamily} onValueChange={setFontFamily}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a font" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                                <SelectItem value="Arial">Arial</SelectItem>
+                                <SelectItem value="Verdana">Verdana</SelectItem>
+                                <SelectItem value="Georgia">Georgia</SelectItem>
+                                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                              </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                           <Label htmlFor="text-color-2">Color</Label>
+                            <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                        </div>
                     </div>
                     <div>
                         <Label>Font Size: {fontSize}px</Label>
@@ -472,10 +563,30 @@ export default function EditorPageContent() {
              </Card>
             )}
 
-            {selectedElementId && (
-                <Button variant="destructive" onClick={deleteSelectedElement}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
-                </Button>
+            {selectedElementId && selectedElement?.type !== 'image' && (
+                <Card>
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-base">Element Properties</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-4">
+                         <div>
+                            <Label>Opacity: {Math.round(elementOpacity * 100)}%</Label>
+                            <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} min={0} max={1} step={0.01}/>
+                        </div>
+
+                         <div className="space-y-2">
+                            <Label>Layer</Label>
+                            <div className="flex gap-2">
+                                <Button className="w-full" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-4 w-4"/> Send Backward</Button>
+                                <Button className="w-full" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-4 w-4"/> Bring Forward</Button>
+                            </div>
+                        </div>
+
+                        <Button variant="destructive" onClick={deleteSelectedElement} className="w-full">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+                        </Button>
+                    </CardContent>
+                </Card>
             )}
 
         </aside>
