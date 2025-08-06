@@ -190,7 +190,7 @@ export default function EditorPageContent() {
       handleNewCanvas();
     }
     setIsLoading(false);
-  }, [router, toast]);
+  }, []);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -264,23 +264,13 @@ export default function EditorPageContent() {
   const addText = () => {
     if (!textInput) return;
     
-    const canvas = canvasRef.current;
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if(!ctx) return;
-
-    ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
-    const textMetrics = ctx.measureText(textInput);
-    const textWidth = textMetrics.width;
-    const textHeight = fontSize;
-
     const newText: CanvasElement = {
         id: `text_${Date.now()}`,
         type: 'text',
-        x: (EDITOR_RESOLUTION - textWidth)/2,
-        y: (EDITOR_RESOLUTION - textHeight)/2,
-        width: textWidth,
-        height: textHeight,
+        x: EDITOR_RESOLUTION / 2,
+        y: EDITOR_RESOLUTION / 2,
+        width: 0,
+        height: 0,
         text: textInput,
         fontSize: fontSize,
         fontFamily: fontFamily,
@@ -377,10 +367,12 @@ export default function EditorPageContent() {
             fontWeight,
             color: textColor,
             width: textMetrics.width,
-            height: fontSize
+            height: fontSize,
+            x: (EDITOR_RESOLUTION - textMetrics.width) / 2,
+            y: (EDITOR_RESOLUTION - fontSize) / 2
         });
     }
-  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElement]);
+  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElement?.text, selectedElement?.id]);
 
   useEffect(() => {
     if (selectedElement?.type === 'shape') {
@@ -390,7 +382,7 @@ export default function EditorPageContent() {
             strokeWidth: strokeWidth,
         });
     }
-  }, [shapeColor, strokeColor, strokeWidth, selectedElement]);
+  }, [shapeColor, strokeColor, strokeWidth, selectedElement?.id]);
 
   useEffect(() => {
     if(selectedElementId) updateSelectedElement({ opacity: elementOpacity })
@@ -618,3 +610,5 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
+    
