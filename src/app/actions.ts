@@ -26,13 +26,19 @@ export async function handleGenerateVariations(formData: FormData) {
     });
 
     if (!result || !result.variations || result.variations.length === 0) {
-      return { error: 'Failed to generate variations. The AI model may be unavailable or returned no results.' };
+      return { error: 'Failed to generate variations. The AI model may be unavailable, returned no results, or the API key may be missing.' };
     }
 
     return { variations: result.variations.map(v => v.imageDataUri) };
   } catch (e) {
     console.error('Error in handleGenerateVariations:', e);
-    const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred.';
+    let errorMessage = 'An unexpected error occurred.';
+    if (e instanceof Error) {
+        errorMessage = e.message;
+        if (e.message.includes('API key')) {
+            errorMessage = 'The Gemini API key is not configured correctly. Please check your environment variables.'
+        }
+    }
     return { error: `An unexpected error occurred: ${errorMessage}` };
   }
 }
