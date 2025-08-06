@@ -51,11 +51,11 @@ export default function HomePageContent() {
         setShowSizes(false);
     } else {
         const originalImage = sessionStorage.getItem('faviconToEdit');
-        if (originalImage && !faviconSrc) {
+        if (originalImage) {
             setFaviconSrc(originalImage);
         }
     }
-  }, [faviconSrc]);
+  }, []);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
