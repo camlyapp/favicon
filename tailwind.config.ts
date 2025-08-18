@@ -91,13 +91,22 @@ export default {
             'background-size':'200% 200%',
             'background-position': 'right center'
           }
-        }
+        },
+        'slow-spin': {
+          from: {
+            transform: 'rotate(0deg)',
+          },
+          to: {
+            transform: 'rotate(360deg)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'subtle-pulse': 'subtle-pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'gradient-xy': 'gradient-xy 15s ease infinite',
+        'slow-spin': 'slow-spin 5s linear infinite',
       },
     },
   },

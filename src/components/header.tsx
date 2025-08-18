@@ -166,8 +166,8 @@ export function AppHeader({
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
                 ) : (
-                    <Link href="/" className="flex items-center gap-2 animate-subtle-pulse">
-                         <Image src="/camly.png" alt="Camly logo" width={24} height={24} />
+                    <Link href="/" className="flex items-center gap-2">
+                         <Image src="/camly.png" alt="Camly logo" width={24} height={24} className="animate-slow-spin" />
                         <h1 className="text-xl font-bold hidden sm:inline-block">Favicon</h1>
                     </Link>
                 )}
