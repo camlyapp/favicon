@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
-import { AppHeader } from '@/components/header';
-import { SeoSection } from '@/components/seo-section';
 import HomePageContent from '@/app/home-page-content';
-
+import { SeoSection } from '@/components/seo-section';
 
 export const metadata: Metadata = {
   title: 'Favicon | Create and Generate Favicons Instantly',
@@ -28,9 +26,7 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function Home() {
-
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <HomePageContent />
