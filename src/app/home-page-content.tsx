@@ -310,6 +310,11 @@ setShowSizes(false);
     return JSON.stringify({
         "name": "Favicon: AI-Powered Favicon Generator",
         "short_name": "Favicon",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#A050C3",
+        "theme_color": "#A050C3",
+        "description": "A modern, intuitive favicon creation app for generating pixel-perfect site icons.",
         "icons": [
             {
                 "src": "/android-chrome-192x192.png",
@@ -320,11 +325,14 @@ setShowSizes(false);
                 "src": "/android-chrome-512x512.png",
                 "sizes": "512x512",
                 "type": "image/png"
+            },
+            {
+                "src": "/android-chrome-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
             }
-        ],
-        "theme_color": "#ffffff",
-        "background_color": "#ffffff",
-        "display": "standalone"
+        ]
     }, null, 2);
   }
 

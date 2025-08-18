@@ -13,6 +13,15 @@ export const metadata: Metadata = {
   authors: [{ name: 'Firebase' }],
   creator: 'Firebase',
   publisher: 'Firebase',
+  applicationName: "Favicon",
+  appleWebApp: {
+    capable: true,
+    title: "Favicon",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   metadataBase: new URL('https://your-app-url.com'), // Replace with your actual domain
   openGraph: {
     url: 'https://your-app-url.com', // Replace with your actual domain
@@ -51,6 +60,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <meta name="theme-color" content="#A050C3" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
         <ThemeProvider
