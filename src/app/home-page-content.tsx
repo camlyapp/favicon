@@ -16,7 +16,8 @@ import {
     Eye,
     X,
     Pencil,
-    Package
+    Package,
+    ArrowDown
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,6 +39,7 @@ export default function HomePageContent() {
   const [generatedSizes, setGeneratedSizes] = useState<GeneratedSize[]>([]);
   const [showSizes, setShowSizes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploaderRef = useRef<HTMLDivElement>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -316,22 +318,11 @@ setShowSizes(false);
         "theme_color": "#A050C3",
         "description": "A modern, intuitive favicon creation app for generating pixel-perfect site icons.",
         "icons": [
-            {
-                "src": "/android-chrome-192x192.png",
-                "sizes": "192x192",
-                "type": "image/png"
-            },
-            {
-                "src": "/android-chrome-512x512.png",
-                "sizes": "512x512",
-                "type": "image/png"
-            },
-            {
-                "src": "/android-chrome-512x512.png",
-                "sizes": "512x512",
-                "type": "image/png",
-                "purpose": "any maskable"
-            }
+            { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+            { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+            { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+            { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+            { "src": "/favicon-16x16.png", "sizes": "16x16", "type": "image/png" }
         ]
     }, null, 2);
   }
@@ -345,6 +336,10 @@ setShowSizes(false);
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
+  }
+
+  const handleScrollToUploader = () => {
+    uploaderRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
   return (
@@ -372,8 +367,24 @@ setShowSizes(false);
             generatedSizes={generatedSizes}
         />
 
-      <main className="flex-1 grid grid-cols-1">
-        <div className="flex flex-col bg-muted/20 relative">
+      <main className="flex-1 flex flex-col">
+          <section className="w-full py-20 md:py-32 lg:py-40 xl:py-48 text-center bg-gradient-to-br from-background via-purple-50/50 to-background animate-gradient-xy">
+            <div className="container px-4 md:px-6">
+                <div className="flex flex-col items-center space-y-4">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+                    The Ultimate Favicon Generator
+                </h1>
+                <p className="max-w-[700px] text-muted-foreground md:text-xl">
+                    Create the perfect icon for your brand. Upload an image, use AI to generate variations, customize in our editor, and export a complete package for your website in one click.
+                </p>
+                <Button size="lg" onClick={handleScrollToUploader}>
+                    Get Started <ArrowDown className="ml-2 h-4 w-4" />
+                </Button>
+                </div>
+            </div>
+          </section>
+
+        <div className="flex flex-col bg-muted/20 relative" ref={uploaderRef}>
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
                  <Card className="flex-1 flex flex-col">
