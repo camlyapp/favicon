@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next';
 
-// This is a placeholder URL. Replace with your actual domain.
-const URL = 'https://your-app-url.com';
+const URL = 'https://favicon.pro';
 
 export default function robots(): MetadataRoute.Robots {
   return {

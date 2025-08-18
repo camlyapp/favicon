@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  metadataBase: new URL('https://your-app-url.com'), // Replace with your actual domain
+  metadataBase: new URL('https://favicon.pro'),
   openGraph: {
-    url: 'https://your-app-url.com', // Replace with your actual domain
+    url: 'https://favicon.pro',
     siteName: 'Favicon',
     locale: 'en_US',
     type: 'website',
