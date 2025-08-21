@@ -6,26 +6,26 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Favicon',
-    template: '%s | Favicon',
+    default: 'Favicon Generator | Create Custom Favicons with AI',
+    template: '%s | Favicon Generator',
   },
   description: 'A modern, intuitive favicon creation app for generating pixel-perfect site icons. Upload an image, use AI to generate variations, and export all necessary sizes in one click.',
   authors: [{ name: 'Firebase' }],
   creator: 'Firebase',
   publisher: 'Firebase',
-  applicationName: "Favicon",
+  applicationName: "Favicon Generator",
   appleWebApp: {
     capable: true,
-    title: "Favicon",
+    title: "Favicon Generator",
     statusBarStyle: "default",
   },
   formatDetection: {
     telephone: false,
   },
-  metadataBase: new URL('https://favicon.pro'),
+  metadataBase: new URL('https://favicon-generate.vercel.app'),
   openGraph: {
-    url: 'https://favicon.pro',
-    siteName: 'Favicon',
+    url: 'https://favicon-generate.vercel.app',
+    siteName: 'Favicon Generator',
     locale: 'en_US',
     type: 'website',
   },

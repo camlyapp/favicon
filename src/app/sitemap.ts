@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-const URL = 'https://favicon.pro';
+const URL = 'https://favicon-generate.vercel.app';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
