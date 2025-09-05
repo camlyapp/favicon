@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Footer } from '@/components/footer';
-import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
   title: {
@@ -64,18 +63,11 @@ export default function RootLayout({
         <meta name="theme-color" content="#A050C3" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
           <div className="flex-grow">
             {children}
           </div>
           <Footer />
           <Toaster />
-        </ThemeProvider>
       </body>
     </html>
   );
