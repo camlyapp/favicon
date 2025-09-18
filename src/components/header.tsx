@@ -169,7 +169,7 @@ export function AppHeader({
     const router = useRouter();
 
     return (
-        <header className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
             <div className="flex items-center gap-1 sm:gap-3">
                 {isEditorPage ? (
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
