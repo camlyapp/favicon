@@ -63,7 +63,6 @@ interface CanvasElement {
 
 interface HistoryState {
     elements: CanvasElement[];
-    canvasColor: string;
 }
 
 const EDITOR_RESOLUTION = 1024;
@@ -79,7 +78,6 @@ export default function EditorPageContent() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   
   const [elements, setElements] = useState<CanvasElement[]>([]);
-  const [canvasColor, setCanvasColor] = useState('#ffffff');
   
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
@@ -107,13 +105,13 @@ export default function EditorPageContent() {
   const selectedElement = elements.find(el => el.id === selectedElementId);
 
   const saveStateToHistory = useCallback(() => {
-    const currentState: HistoryState = { elements, canvasColor };
+    const currentState: HistoryState = { elements };
     
     const newHistory = history.slice(0, historyIndex + 1);
     
     setHistory([...newHistory, currentState]);
     setHistoryIndex(newHistory.length);
-  }, [elements, canvasColor, history, historyIndex]);
+  }, [elements, history, historyIndex]);
 
   const undo = () => {
     if (historyIndex > 0) {
@@ -121,7 +119,6 @@ export default function EditorPageContent() {
       setHistoryIndex(newIndex);
       const prevState = history[newIndex];
       setElements(prevState.elements);
-      setCanvasColor(prevState.canvasColor);
     }
   };
 
@@ -131,7 +128,6 @@ export default function EditorPageContent() {
       setHistoryIndex(newIndex);
       const nextState = history[newIndex];
       setElements(nextState.elements);
-      setCanvasColor(nextState.canvasColor);
     }
   };
 
@@ -143,9 +139,6 @@ export default function EditorPageContent() {
     if (!ctx) return;
     
     ctx.clearRect(0,0,canvas.width, canvas.height);
-
-    ctx.fillStyle = canvasColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     elements.forEach(el => {
         ctx.globalAlpha = el.opacity ?? 1;
@@ -237,14 +230,14 @@ export default function EditorPageContent() {
                 opacity: 1,
              };
             setElements([newImageElement]);
-            const initialState: HistoryState = { elements: [newImageElement], canvasColor: '#ffffff' };
+            const initialState: HistoryState = { elements: [newImageElement] };
             setHistory([initialState]);
             setHistoryIndex(0);
         };
         img.src = imageToEdit;
 
     } else {
-       const initialState: HistoryState = { elements: [], canvasColor: '#ffffff' };
+       const initialState: HistoryState = { elements: [] };
        setHistory([initialState]);
        setHistoryIndex(0);
     }
@@ -260,7 +253,7 @@ export default function EditorPageContent() {
         renderCanvas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elements, canvasColor, selectedElementId]);
+  }, [elements, selectedElementId]);
 
   useEffect(() => {
     if (selectedElement) {
@@ -301,7 +294,6 @@ export default function EditorPageContent() {
   const handleNewCanvas = () => {
     setElements([]);
     setSelectedElementId(null);
-    setCanvasColor('#ffffff');
     saveStateToHistory();
   };
 
@@ -568,9 +560,8 @@ export default function EditorPageContent() {
                     <AccordionTrigger className="p-3 text-sm font-semibold">Canvas & Shapes</AccordionTrigger>
                     <AccordionContent className="p-2 space-y-2">
                         <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                            <Label className="text-xs">Canvas</Label>
+                            <Label className="text-xs">New Canvas</Label>
                             <div className="flex items-center gap-2">
-                                <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-10 cursor-pointer" />
                                 <Button size="sm" className="w-full text-xs" variant="secondary" onClick={handleNewCanvas}>
                                     <RefreshCw className="mr-2 h-3 w-3" /> New
                                 </Button>
@@ -734,9 +725,3 @@ export default function EditorPageContent() {
     </div>
   );
 }
-
-    
-
-    
-
-
