@@ -132,8 +132,6 @@ interface AppHeaderProps {
     onUploadClick?: () => void;
     onGoToEditor?: () => void;
     onGenerateAllSizes?: () => void;
-    onGenerateVariations?: () => void;
-    isPending?: boolean;
     faviconSrc?: string | null;
     handleDownloadZip?: () => void;
     getHtmlCode?: () => string;
@@ -155,8 +153,6 @@ export function AppHeader({
     onUploadClick,
     onGoToEditor,
     onGenerateAllSizes,
-    onGenerateVariations,
-    isPending,
     faviconSrc,
     handleDownloadZip,
     getHtmlCode,
@@ -211,10 +207,6 @@ export function AppHeader({
                         </Button>
                         <Button onClick={onGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
                             <Eye className="mr-0 sm:mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Preview</span>
-                        </Button>
-                        <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} variant="outline" size="sm">
-                            {isPending ? <Loader2 className="mr-0 sm:mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-0 sm:mr-2 h-4 w-4" />}
                             <span className="hidden sm:inline">Generate</span>
                         </Button>
                         {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && isExportDialogOpen !== undefined && setIsExportDialogOpen !== undefined && (

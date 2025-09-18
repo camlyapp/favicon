@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { handleGenerateVariations } from '@/app/actions';
 import {
     Upload,
     Loader2,
@@ -34,9 +33,7 @@ interface GeneratedSize {
 export default function HomePageContent() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [faviconSrc, setFaviconSrc] = useState<string | null>(null);
-  const [variations, setVariations] = useState<string[]>([]);
   const [generatedSizes, setGeneratedSizes] = useState<GeneratedSize[]>([]);
   const [showSizes, setShowSizes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +46,6 @@ export default function HomePageContent() {
         setFaviconSrc(croppedImage);
         sessionStorage.removeItem('croppedImage');
         sessionStorage.removeItem('faviconToEdit'); 
-        setVariations([]);
         setGeneratedSizes([]);
         setShowSizes(false);
     } else {
@@ -75,7 +71,6 @@ export default function HomePageContent() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setFaviconSrc(result);
-        setVariations([]);
         setGeneratedSizes([]);
         setShowSizes(false);
       };
@@ -95,38 +90,6 @@ export default function HomePageContent() {
     sessionStorage.setItem('faviconToEdit', faviconSrc);
     router.push('/editor');
   }
-
-  const onGenerateVariations = () => {
-    if (!faviconSrc) {
-      toast({
-        title: 'No Favicon',
-        description: 'Please upload an image or create a new canvas first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append('faviconDataUri', faviconSrc);
-      const result = await handleGenerateVariations(formData);
-
-      if (result.error) {
-        toast({
-          title: 'Error Generating Variations',
-          description: result.error,
-          variant: 'destructive',
-        });
-      } else if (result.variations) {
-        setVariations(result.variations);
-setShowSizes(false);
-        toast({
-          title: 'Success!',
-          description: 'New favicon variations have been generated.',
-        });
-      }
-    });
-  };
 
   const createZip = async () => {
     let currentGeneratedSizes = generatedSizes;
@@ -395,8 +358,6 @@ setShowSizes(false);
             onUploadClick={handleUploadClick}
             onGoToEditor={handleGoToEditor}
             onGenerateAllSizes={handleGenerateAllSizes}
-            onGenerateVariations={onGenerateVariations}
-            isPending={isPending}
             faviconSrc={faviconSrc}
             handleDownloadZip={handleDownloadZip}
             getHtmlCode={getHtmlCode}
@@ -494,18 +455,6 @@ setShowSizes(false);
                         )}
                       </button>
                     </div>
-                     {variations.length > 0 && (
-                        <div className="lg:col-span-1">
-                            <h3 className="text-lg font-medium mb-4 text-center lg:text-left">AI Variations</h3>
-                            <div className="grid grid-cols-3 lg:grid-cols-2 gap-2 rounded-lg p-2 bg-secondary/50">
-                              {variations.map((v, i) => (
-                                <button key={i} onClick={() => { setFaviconSrc(v); setGeneratedSizes([]); setShowSizes(false); }} className="rounded-md overflow-hidden border-2 border-transparent hover:border-primary focus:border-primary transition-all aspect-square">
-                                  <Image src={v} alt={`Variation ${i + 1}`} width={96} height={96} className="object-cover w-full h-full bg-white" />
-                                </button>
-                              ))}
-                            </div>
-                        </div>
-                      )}
                 </div>
               )}
             </div>
