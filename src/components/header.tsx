@@ -15,7 +15,9 @@ import {
     Save,
     Package,
     Download,
-    Copy
+    Copy,
+    Undo,
+    Redo
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -137,6 +139,10 @@ interface AppHeaderProps {
     getWebmanifestContent?: () => string;
     handleDownloadIco?: () => void;
     generatedSizes?: GeneratedSize[];
+    onUndo?: () => void;
+    onRedo?: () => void;
+    canUndo?: boolean;
+    canRedo?: boolean;
 }
 
 export function AppHeader({
@@ -153,7 +159,11 @@ export function AppHeader({
     copyToClipboard,
     getWebmanifestContent,
     handleDownloadIco,
-    generatedSizes = []
+    generatedSizes = [],
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
 }: AppHeaderProps) {
     const router = useRouter();
 
@@ -174,9 +184,17 @@ export function AppHeader({
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
                 {isEditorPage ? (
-                    <Button size="sm" onClick={onSave}>
-                        <Save className="mr-0 sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Save</span>
-                    </Button>
+                    <>
+                        <Button variant="ghost" size="icon" onClick={onUndo} disabled={!canUndo}>
+                            <Undo className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={onRedo} disabled={!canRedo}>
+                            <Redo className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" onClick={onSave}>
+                            <Save className="mr-0 sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Save</span>
+                        </Button>
+                    </>
                 ) : (
                     <>
                         <Button variant="ghost" size="sm" onClick={onUploadClick}>

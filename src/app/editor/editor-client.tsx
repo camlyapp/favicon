@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, MouseEvent } from 'react';
+import React, { useState, useRef, useEffect, MouseEvent, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,9 @@ import {
     ArrowUp,
     ArrowDown,
     Plus,
-    Minus
+    Minus,
+    Undo,
+    Redo
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -59,6 +61,10 @@ interface CanvasElement {
     strokeColor?: string;
 }
 
+interface HistoryState {
+    elements: CanvasElement[];
+    canvasColor: string;
+}
 
 const EDITOR_RESOLUTION = 1024;
 
@@ -69,10 +75,10 @@ export default function EditorPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-
-  const [canvasColor, setCanvasColor] = useState('#ffffff');
   
   const [elements, setElements] = useState<CanvasElement[]>([]);
+  const [canvasColor, setCanvasColor] = useState('#ffffff');
+  
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -91,7 +97,41 @@ export default function EditorPageContent() {
 
   const [elementOpacity, setElementOpacity] = useState(1);
   
+  const [history, setHistory] = useState<HistoryState[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
   const selectedElement = elements.find(el => el.id === selectedElementId);
+
+  const saveStateToHistory = useCallback(() => {
+    const currentState: HistoryState = { elements, canvasColor };
+    
+    // If we undo and then make a new change, we should clear the "redo" history
+    const newHistory = history.slice(0, historyIndex + 1);
+    
+    setHistory([...newHistory, currentState]);
+    setHistoryIndex(newHistory.length);
+  }, [elements, canvasColor, history, historyIndex]);
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      const prevState = history[newIndex];
+      setElements(prevState.elements);
+      setCanvasColor(prevState.canvasColor);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      const nextState = history[newIndex];
+      setElements(nextState.elements);
+      setCanvasColor(nextState.canvasColor);
+    }
+  };
+
 
   const renderCanvas = () => {
     const canvas = canvasRef.current;
@@ -169,6 +209,7 @@ export default function EditorPageContent() {
 
   useEffect(() => {
     const imageToEdit = sessionStorage.getItem('faviconToEdit');
+    const initialElements: CanvasElement[] = [];
     if (imageToEdit) {
       setFaviconSrc(imageToEdit);
        const img = new window.Image();
@@ -185,13 +226,19 @@ export default function EditorPageContent() {
                 opacity: 1,
              };
             setElements([newImageElement]);
+            const initialState: HistoryState = { elements: [newImageElement], canvasColor: '#ffffff' };
+            setHistory([initialState]);
+            setHistoryIndex(0);
         };
         img.src = imageToEdit;
 
     } else {
-      handleNewCanvas();
+       const initialState: HistoryState = { elements: [], canvasColor: '#ffffff' };
+       setHistory([initialState]);
+       setHistoryIndex(0);
     }
     setIsLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
@@ -242,6 +289,8 @@ export default function EditorPageContent() {
   const handleNewCanvas = () => {
     setElements([]);
     setSelectedElementId(null);
+    setCanvasColor('#ffffff');
+    saveStateToHistory();
   };
 
   const addShape = (shape: 'square' | 'circle') => {
@@ -350,6 +399,9 @@ export default function EditorPageContent() {
   }
 
   const handleMouseUp = () => {
+    if (isDragging) {
+      saveStateToHistory();
+    }
     setIsDragging(false);
   }
   
@@ -374,6 +426,7 @@ export default function EditorPageContent() {
             y: (EDITOR_RESOLUTION - fontSize) / 2
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElement?.text, selectedElement?.id]);
 
   useEffect(() => {
@@ -384,10 +437,12 @@ export default function EditorPageContent() {
             strokeWidth: strokeWidth,
         });
     }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shapeColor, strokeColor, strokeWidth, selectedElement?.id]);
 
   useEffect(() => {
     if(selectedElementId) updateSelectedElement({ opacity: elementOpacity })
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elementOpacity, selectedElementId]);
 
   const moveLayer = (direction: 'up' | 'down') => {
@@ -406,6 +461,7 @@ export default function EditorPageContent() {
         
         return newElements;
     });
+    saveStateToHistory();
   }
 
   const adjustSize = (amount: number) => {
@@ -435,7 +491,14 @@ export default function EditorPageContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <AppHeader isEditorPage={true} onSave={handleSave} />
+      <AppHeader 
+        isEditorPage={true} 
+        onSave={handleSave} 
+        onUndo={undo} 
+        onRedo={redo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+      />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-2 overflow-y-auto">
              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
@@ -450,7 +513,7 @@ export default function EditorPageContent() {
                                 <CardContent className="p-4 pt-0">
                                     <div className="flex items-center gap-2">
                                          <Label htmlFor="canvas-color" className="sr-only">Background</Label>
-                                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} className="p-1 h-9 w-12 cursor-pointer" />
+                                        <Input id="canvas-color" type="color" value={canvasColor} onChange={(e) => setCanvasColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-9 w-12 cursor-pointer" />
                                         <Button size="sm" className="w-full" variant="secondary" onClick={handleNewCanvas}>
                                             <RefreshCw className="mr-2 h-4 w-4" /> New
                                         </Button>
@@ -483,7 +546,7 @@ export default function EditorPageContent() {
                                     </div>
                                      <div className="space-y-2">
                                        <Label htmlFor="text-color">Color</Label>
-                                        <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                        <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-10 w-full cursor-pointer" />
                                     </div>
                                 </div>
                                  <Button className="w-full" variant="outline" onClick={addText} disabled={!textInput}>
@@ -504,22 +567,22 @@ export default function EditorPageContent() {
                                      <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="shape-color">Fill Color</Label>
-                                            <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                            <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-10 w-full cursor-pointer" />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="stroke-color">Border Color</Label>
-                                            <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                            <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-10 w-full cursor-pointer" />
                                         </div>
                                     </div>
                                     <div>
                                         <Label>Border Width: {strokeWidth}px</Label>
-                                        <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} min={0} max={50} step={1}/>
+                                        <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} onValueCommit={saveStateToHistory} min={0} max={50} step={1}/>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Size</Label>
                                         <div className="flex gap-2">
-                                            <Button className="w-full" variant="outline" onClick={() => adjustSize(-10)}><Minus className="mr-2 h-4 w-4"/> Decrease</Button>
-                                            <Button className="w-full" variant="outline" onClick={() => adjustSize(10)}><Plus className="mr-2 h-4 w-4"/> Increase</Button>
+                                            <Button className="w-full" variant="outline" onClick={() => {adjustSize(-10); saveStateToHistory();}}><Minus className="mr-2 h-4 w-4"/> Decrease</Button>
+                                            <Button className="w-full" variant="outline" onClick={() => {adjustSize(10); saveStateToHistory();}}><Plus className="mr-2 h-4 w-4"/> Increase</Button>
                                         </div>
                                     </div>
                                 </CardContent>
@@ -537,7 +600,7 @@ export default function EditorPageContent() {
                                 <div className="grid grid-cols-2 gap-4">
                                      <div>
                                         <Label>Font Family</Label>
-                                        <Select value={fontFamily} onValueChange={setFontFamily}>
+                                        <Select value={fontFamily} onValueChange={(v) => {setFontFamily(v); saveStateToHistory()}}>
                                           <SelectTrigger>
                                             <SelectValue placeholder="Select a font" />
                                           </SelectTrigger>
@@ -552,24 +615,24 @@ export default function EditorPageContent() {
                                     </div>
                                     <div className="space-y-2">
                                        <Label htmlFor="text-color-2">Color</Label>
-                                        <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="p-1 h-10 w-full cursor-pointer" />
+                                        <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-10 w-full cursor-pointer" />
                                     </div>
                                 </div>
                                 <div>
                                     <Label>Font Size: {fontSize}px</Label>
-                                    <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} min={16} max={512} step={2}/>
+                                    <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} onValueCommit={saveStateToHistory} min={16} max={512} step={2}/>
                                 </div>
                                 <div className="flex items-center justify-between">
                                      <div className="flex items-center gap-2">
                                        <Label>Align</Label>
                                         <div className="flex gap-1">
-                                            <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('left')}><AlignLeft className="h-4 w-4"/></Button>
-                                            <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('center')}><AlignCenter className="h-4 w-4"/></Button>
-                                            <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => setTextAlign('right')}><AlignRight className="h-4 w-4"/></Button>
+                                            <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('left'); saveStateToHistory();}}><AlignLeft className="h-4 w-4"/></Button>
+                                            <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('center'); saveStateToHistory();}}><AlignCenter className="h-4 w-4"/></Button>
+                                            <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('right'); saveStateToHistory();}}><AlignRight className="h-4 w-4"/></Button>
                                         </div>
                                      </div>
                                      <div className="flex items-center space-x-2">
-                                        <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => setFontWeight(c ? 'bold' : 'normal')} />
+                                        <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => {setFontWeight(c ? 'bold' : 'normal'); saveStateToHistory()}} />
                                         <Label htmlFor="font-weight">Bold</Label>
                                     </div>
                                 </div>
@@ -587,7 +650,7 @@ export default function EditorPageContent() {
                                 <CardContent className="p-4 pt-0 space-y-4">
                                      <div>
                                         <Label>Opacity: {Math.round(elementOpacity * 100)}%</Label>
-                                        <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} min={0} max={1} step={0.01}/>
+                                        <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} onValueCommit={saveStateToHistory} min={0} max={1} step={0.01}/>
                                     </div>
 
                                      <div className="space-y-2">
@@ -598,7 +661,7 @@ export default function EditorPageContent() {
                                         </div>
                                     </div>
 
-                                    <Button variant="destructive" onClick={deleteSelectedElement} className="w-full">
+                                    <Button variant="destructive" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full">
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
                                     </Button>
                                 </CardContent>
