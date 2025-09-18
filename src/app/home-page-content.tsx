@@ -179,7 +179,7 @@ export default function HomePageContent() {
             });
             toast({ title: "Shared successfully!" });
         } else {
-             toast({ title: "Sharing not supported", description: "Your browser does not support sharing files.", variant: "destructive" });
+             handleDownloadZip();
         }
     } catch (error) {
         console.error("Sharing failed:", error);
@@ -463,3 +463,5 @@ export default function HomePageContent() {
     </>
   );
 }
+
+    
