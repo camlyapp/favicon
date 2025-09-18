@@ -17,7 +17,8 @@ import {
     Download,
     Copy,
     Undo,
-    Redo
+    Redo,
+    Share2
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -131,6 +132,7 @@ interface AppHeaderProps {
     onGoToEditor?: () => void;
     onGenerateAllSizes?: () => void;
     onGenerateVariations?: () => void;
+    onShare?: () => void;
     isPending?: boolean;
     faviconSrc?: string | null;
     handleDownloadZip?: () => void;
@@ -152,6 +154,7 @@ export function AppHeader({
     onGoToEditor,
     onGenerateAllSizes,
     onGenerateVariations,
+    onShare,
     isPending,
     faviconSrc,
     handleDownloadZip,
@@ -211,6 +214,10 @@ export function AppHeader({
                         <Button onClick={onGenerateVariations} disabled={isPending || !faviconSrc} variant="outline" size="sm">
                             {isPending ? <Loader2 className="mr-0 sm:mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-0 sm:mr-2 h-4 w-4" />}
                             <span className="hidden sm:inline">Generate</span>
+                        </Button>
+                         <Button onClick={onShare} disabled={!faviconSrc} variant="outline" size="sm">
+                            <Share2 className="mr-0 sm:mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">Share</span>
                         </Button>
                         {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && (
                              <ExportDialog

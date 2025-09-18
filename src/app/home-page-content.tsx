@@ -127,6 +127,34 @@ setShowSizes(false);
     });
   };
 
+  const handleShare = async () => {
+    if (!faviconSrc) {
+        toast({ title: "No image to share", description: "Please generate an image first.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const response = await fetch(faviconSrc);
+        const blob = await response.blob();
+        const file = new File([blob], "favicon.png", { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'My Favicon',
+                text: 'Check out this favicon I created!',
+            });
+            toast({ title: "Shared successfully!" });
+        } else {
+             toast({ title: "Sharing not supported", description: "Your browser does not support sharing files.", variant: "destructive" });
+        }
+    } catch (error) {
+        console.error("Sharing failed:", error);
+        toast({ title: "Sharing failed", description: "Could not share the image.", variant: "destructive" });
+    }
+  };
+
+
   const resizeImage = (src: string, size: number): Promise<string> => {
       return new Promise((resolve, reject) => {
         const img = document.createElement('img');
@@ -357,6 +385,7 @@ setShowSizes(false);
             onGoToEditor={handleGoToEditor}
             onGenerateAllSizes={handleGenerateAllSizes}
             onGenerateVariations={onGenerateVariations}
+            onShare={handleShare}
             isPending={isPending}
             faviconSrc={faviconSrc}
             handleDownloadZip={handleDownloadZip}
