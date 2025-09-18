@@ -387,26 +387,26 @@ setShowSizes(false);
         <div className="flex flex-col bg-muted/20 relative" ref={uploaderRef}>
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
-                 <Card className="flex-1 flex flex-col">
-                    <CardHeader className="flex-row items-center justify-between">
+                 <Card className="flex-1 flex flex-col max-w-7xl w-full mx-auto">
+                    <CardHeader className="flex-row items-center justify-between border-b">
                         <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-                           <Eye className="w-5 h-5 sm:w-6 sm:h-6"/> Previews
+                           <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-primary"/> Previews
                         </CardTitle>
                         <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)}>
                             <X className="w-5 h-5"/>
                             <span className="sr-only">Close Previews</span>
                         </Button>
                     </CardHeader>
-                    <CardContent className="flex-1">
-                        <ScrollArea className="h-full">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 pr-4">
+                    <CardContent className="flex-1 p-4 md:p-6">
+                        <ScrollArea className="h-[60vh]">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
-                                <div key={size} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-secondary">
-                                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner">
+                                <div key={size} className="flex flex-col items-center gap-3 p-3 rounded-lg bg-background border shadow-sm">
+                                  <div className="w-20 h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner overflow-hidden">
                                     <Image src={dataUrl} alt={`Favicon ${size}x${size}`} width={size} height={size} className="object-contain" />
                                   </div>
-                                  <span className="text-xs font-medium">{size}x{size}</span>
-                                  <Button variant="ghost" size="sm" onClick={() => downloadImage(dataUrl, `favicon-${size}x${size}.png`)}>
+                                  <span className="text-xs font-semibold">{size}x{size}</span>
+                                  <Button variant="outline" size="sm" onClick={() => downloadImage(dataUrl, `favicon-${size}x${size}.png`)} className="w-full">
                                     <Download className="mr-1.5 h-3 w-3" />
                                     Save
                                   </Button>
@@ -415,7 +415,7 @@ setShowSizes(false);
                             </div>
                         </ScrollArea>
                     </CardContent>
-                    <CardFooter>
+                    <CardFooter className="border-t pt-6">
                          <Button className="w-full" size="lg" onClick={() => setIsExportDialogOpen(true)}>
                           <Package className="mr-2 h-4 w-4" />
                           Export All
