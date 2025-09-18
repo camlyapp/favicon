@@ -67,6 +67,8 @@ interface HistoryState {
 }
 
 const EDITOR_RESOLUTION = 1024;
+const HANDLE_SIZE = 16;
+type Handle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
 
 export default function EditorPageContent() {
   const router = useRouter();
@@ -83,6 +85,8 @@ export default function EditorPageContent() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const [isResizing, setIsResizing] = useState<Handle>(null);
   
   const [textInput, setTextInput] = useState('A');
   const [textColor, setTextColor] = useState('#A050C3');
@@ -105,7 +109,6 @@ export default function EditorPageContent() {
   const saveStateToHistory = useCallback(() => {
     const currentState: HistoryState = { elements, canvasColor };
     
-    // If we undo and then make a new change, we should clear the "redo" history
     const newHistory = history.slice(0, historyIndex + 1);
     
     setHistory([...newHistory, currentState]);
@@ -201,6 +204,14 @@ export default function EditorPageContent() {
             ctx.strokeStyle = '#007BFF';
             ctx.lineWidth = 4;
             ctx.strokeRect(el.x-2, el.y-2, el.width+4, el.height+4);
+
+            if (el.type === 'shape') {
+                ctx.fillStyle = '#007BFF';
+                ctx.fillRect(el.x - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+                ctx.fillRect(el.x + el.width - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+                ctx.fillRect(el.x - HANDLE_SIZE/2, el.y + el.height - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+                ctx.fillRect(el.x + el.width - HANDLE_SIZE/2, el.y + el.height - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+            }
         }
 
         ctx.globalAlpha = 1; // Reset for next element
@@ -248,6 +259,7 @@ export default function EditorPageContent() {
         canvas.height = EDITOR_RESOLUTION;
         renderCanvas();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elements, canvasColor, selectedElementId]);
 
   useEffect(() => {
@@ -340,8 +352,18 @@ export default function EditorPageContent() {
     setSelectedElementId(null);
   }
 
+   const getHandleAt = (x: number, y: number, el: CanvasElement): Handle => {
+      const halfHandle = HANDLE_SIZE / 2;
+      if (x >= el.x - halfHandle && x <= el.x + halfHandle && y >= el.y - halfHandle && y <= el.y + halfHandle) return 'top-left';
+      if (x >= el.x + el.width - halfHandle && x <= el.x + el.width + halfHandle && y >= el.y - halfHandle && y <= el.y + halfHandle) return 'top-right';
+      if (x >= el.x - halfHandle && x <= el.x + halfHandle && y >= el.y + el.height - halfHandle && y <= el.y + el.height + halfHandle) return 'bottom-left';
+      if (x >= el.x + el.width - halfHandle && x <= el.x + el.width + halfHandle && y >= el.y + el.height - halfHandle && y <= el.y + el.height + halfHandle) return 'bottom-right';
+      return null;
+    }
+
+
   const getElementAt = (e: MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current) return null;
+    if (!canvasRef.current) return {element: null, handle: null};
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -349,20 +371,39 @@ export default function EditorPageContent() {
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
     
+    if (selectedElement && selectedElement.type === 'shape') {
+        const handle = getHandleAt(mouseX, mouseY, selectedElement);
+        if (handle) {
+            return { element: selectedElement, handle };
+        }
+    }
+
     for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
         if (el.type === 'image') continue; 
         if (mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
-            return el;
+            return { element: el, handle: null };
         }
     }
-    return null;
+    return { element: null, handle: null };
   }
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current) return;
-    const element = getElementAt(e);
-    if(element) {
+
+    const { element, handle } = getElementAt(e);
+
+    if (handle && element) {
+        setIsResizing(handle);
+        setSelectedElementId(element.id);
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+        setDragStart({x: mouseX, y: mouseY});
+    } else if (element) {
         setSelectedElementId(element.id);
         setIsDragging(true);
         const canvas = canvasRef.current;
@@ -378,31 +419,68 @@ export default function EditorPageContent() {
   }
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !selectedElementId || !canvasRef.current) return;
+    if (!canvasRef.current || !selectedElement) return;
+
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
-    
-    setElements(prev => prev.map(el => {
-        if (el.id === selectedElementId) {
-            return {
-                ...el,
-                x: mouseX - dragStart.x,
-                y: mouseY - dragStart.y
-            };
+
+    if (isResizing) {
+        let { x, y, width, height } = selectedElement;
+        const dx = mouseX - dragStart.x;
+        const dy = mouseY - dragStart.y;
+
+        switch (isResizing) {
+            case 'top-left':
+                width -= dx;
+                height -= dy;
+                x += dx;
+                y += dy;
+                break;
+            case 'top-right':
+                width += dx;
+                height -= dy;
+                y += dy;
+                break;
+            case 'bottom-left':
+                width -= dx;
+                height += dy;
+                x += dx;
+                break;
+            case 'bottom-right':
+                width += dx;
+                height += dy;
+                break;
         }
-        return el;
-    }));
+
+        if (width > HANDLE_SIZE && height > HANDLE_SIZE) {
+            updateSelectedElement({ x, y, width, height });
+            setDragStart({ x: mouseX, y: mouseY });
+        }
+    } else if (isDragging) {
+        updateSelectedElement({
+            x: mouseX - dragStart.x,
+            y: mouseY - dragStart.y
+        });
+    } else {
+        const { handle } = getElementAt(e);
+        if (handle) {
+            canvas.style.cursor = 'nwse-resize'; // A generic resize cursor
+        } else {
+            canvas.style.cursor = 'default';
+        }
+    }
   }
 
   const handleMouseUp = () => {
-    if (isDragging) {
+    if (isDragging || isResizing) {
       saveStateToHistory();
     }
     setIsDragging(false);
+    setIsResizing(null);
   }
   
   useEffect(() => {
@@ -463,22 +541,6 @@ export default function EditorPageContent() {
     });
     saveStateToHistory();
   }
-
-  const adjustSize = (amount: number) => {
-    if (!selectedElement || selectedElement.type !== 'shape') return;
-    
-    const newWidth = selectedElement.width + amount;
-    const newHeight = selectedElement.height + amount;
-
-    if (newWidth > 10 && newHeight > 10) {
-        updateSelectedElement({
-            width: newWidth,
-            height: newHeight,
-            x: selectedElement.x - amount / 2,
-            y: selectedElement.y - amount / 2,
-        });
-    }
-  };
 
 
   if (isLoading) {
@@ -577,13 +639,6 @@ export default function EditorPageContent() {
                                     <div>
                                         <Label>Border Width: {strokeWidth}px</Label>
                                         <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} onValueCommit={saveStateToHistory} min={0} max={50} step={1}/>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Size</Label>
-                                        <div className="flex gap-2">
-                                            <Button className="w-full" variant="outline" onClick={() => {adjustSize(-10); saveStateToHistory();}}><Minus className="mr-2 h-4 w-4"/> Decrease</Button>
-                                            <Button className="w-full" variant="outline" onClick={() => {adjustSize(10); saveStateToHistory();}}><Plus className="mr-2 h-4 w-4"/> Increase</Button>
-                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -687,7 +742,7 @@ export default function EditorPageContent() {
                       linear-gradient(-45deg, transparent 75%, #eee 75%)`,
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    cursor: isDragging ? 'grabbing' : 'default',
+                    cursor: isDragging || isResizing ? 'grabbing' : 'default',
                 }}
                 onMouseDown={handleMouseDown}
             >
@@ -702,3 +757,4 @@ export default function EditorPageContent() {
     
 
     
+
