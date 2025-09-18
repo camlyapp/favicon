@@ -39,13 +39,14 @@ interface GeneratedSize {
 }
 interface ExportDialogProps {
   faviconSrc: string | null;
-  generatedSizes: GeneratedSize[];
   handleDownloadZip: () => void;
   getHtmlCode: () => string;
   copyToClipboard: (text: string) => void;
   getWebmanifestContent: () => string;
   handleDownloadIco: () => void;
   children: React.ReactNode;
+  isExportDialogOpen: boolean;
+  setIsExportDialogOpen: (isOpen: boolean) => void;
 }
 
 const ExportDialog: React.FC<ExportDialogProps> = ({
@@ -55,9 +56,10 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   copyToClipboard,
   getWebmanifestContent,
   handleDownloadIco,
-  children
+  children,
+  isExportDialogOpen,
+  setIsExportDialogOpen,
 }) => {
-    const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
     return (
         <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
             <DialogTrigger asChild>
@@ -143,6 +145,8 @@ interface AppHeaderProps {
     onRedo?: () => void;
     canUndo?: boolean;
     canRedo?: boolean;
+    isExportDialogOpen?: boolean;
+    setIsExportDialogOpen?: (isOpen: boolean) => void;
 }
 
 export function AppHeader({
@@ -159,11 +163,12 @@ export function AppHeader({
     copyToClipboard,
     getWebmanifestContent,
     handleDownloadIco,
-    generatedSizes = [],
     onUndo,
     onRedo,
     canUndo,
     canRedo,
+    isExportDialogOpen,
+    setIsExportDialogOpen,
 }: AppHeaderProps) {
     const router = useRouter();
 
@@ -212,15 +217,16 @@ export function AppHeader({
                             {isPending ? <Loader2 className="mr-0 sm:mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-0 sm:mr-2 h-4 w-4" />}
                             <span className="hidden sm:inline">Generate</span>
                         </Button>
-                        {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && (
+                        {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && isExportDialogOpen !== undefined && setIsExportDialogOpen !== undefined && (
                              <ExportDialog
                                 faviconSrc={faviconSrc}
-                                generatedSizes={generatedSizes}
                                 handleDownloadZip={handleDownloadZip}
                                 getHtmlCode={getHtmlCode}
                                 copyToClipboard={copyToClipboard}
                                 getWebmanifestContent={getWebmanifestContent}
                                 handleDownloadIco={handleDownloadIco}
+                                isExportDialogOpen={isExportDialogOpen}
+                                setIsExportDialogOpen={setIsExportDialogOpen}
                             >
                                 <Button size="sm" disabled={!faviconSrc}>
                                     <Package className="mr-0 sm:mr-2 h-4 w-4" />

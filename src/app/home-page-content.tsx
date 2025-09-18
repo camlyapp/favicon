@@ -128,22 +128,91 @@ setShowSizes(false);
     });
   };
 
+  const createZip = async () => {
+    let currentGeneratedSizes = generatedSizes;
+    if (currentGeneratedSizes.length === 0 && faviconSrc) {
+        try {
+            const highResSrc = await resizeImage(faviconSrc, 1024);
+            currentGeneratedSizes = await Promise.all(
+                SIZES.map(async (size) => {
+                    const dataUrl = await resizeImage(highResSrc, size);
+                    return { size, dataUrl };
+                })
+            );
+        } catch (error) {
+             toast({
+                title: 'Error Generating Sizes',
+                description: 'Could not generate sizes for the zip file.',
+                variant: 'destructive'
+            });
+            return null;
+        }
+    }
+
+    if (currentGeneratedSizes.length === 0) {
+        toast({
+            title: 'No sizes generated',
+            description: 'Could not generate sizes for the zip file. Please try generating them manually first.',
+            variant: 'destructive'
+        });
+        return null;
+    }
+
+    const zip = new JSZip();
+
+    currentGeneratedSizes.forEach(({ size, dataUrl }) => {
+      const base64Data = dataUrl.split(',')[1];
+       if(size === 180) {
+          zip.file(`apple-touch-icon.png`, base64Data, { base64: true });
+       }
+       if (size === 192) {
+          zip.file(`android-chrome-192x192.png`, base64Data, { base64: true });
+       }
+       if (size === 512) {
+          zip.file(`android-chrome-512x512.png`, base64Data, { base64: true });
+       }
+      zip.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
+    });
+    
+    if (faviconSrc) {
+        try {
+            const icoUrl = await resizeImage(faviconSrc, 32);
+            const base64Data = icoUrl.split(',')[1];
+            zip.file(`favicon.ico`, base64Data, { base64: true });
+        } catch (error) {
+            console.error("Could not generate favicon.ico for the zip file.");
+        }
+    }
+
+    zip.file('site.webmanifest', getWebmanifestContent());
+    zip.file('index.html', getFullHtmlPage());
+
+    return zip;
+  }
+
   const handleShare = async () => {
     if (!faviconSrc) {
         toast({ title: "No image to share", description: "Please generate an image first.", variant: "destructive" });
         return;
     }
+    
+    if (generatedSizes.length === 0) {
+       await handleGenerateAllSizes();
+       await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const zip = await createZip();
+    if (!zip) return;
 
     try {
-        const response = await fetch(faviconSrc);
-        const blob = await response.blob();
-        const file = new File([blob], "favicon.png", { type: "image/png" });
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const file = new File([zipBlob], "favicon_package.zip", { type: "application/zip" });
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
-                title: 'My Favicon',
-                text: 'Check out this favicon I created!',
+                title: 'My Favicon Package',
+                text: 'Check out this favicon package I created!',
             });
             toast({ title: "Shared successfully!" });
         } else {
@@ -151,7 +220,7 @@ setShowSizes(false);
         }
     } catch (error) {
         console.error("Sharing failed:", error);
-        toast({ title: "Sharing failed", description: "Could not share the image.", variant: "destructive" });
+        toast({ title: "Sharing failed", description: "Could not share the file.", variant: "destructive" });
     }
   };
 
@@ -238,68 +307,8 @@ setShowSizes(false);
   };
   
   const handleDownloadZip = async () => {
-    if (generatedSizes.length === 0 && faviconSrc) {
-       await handleGenerateAllSizes();
-       await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    let currentGeneratedSizes = generatedSizes;
-    if (currentGeneratedSizes.length === 0 && faviconSrc) {
-        try {
-            const highResSrc = await resizeImage(faviconSrc, 1024);
-            currentGeneratedSizes = await Promise.all(
-                SIZES.map(async (size) => {
-                    const dataUrl = await resizeImage(highResSrc, size);
-                    return { size, dataUrl };
-                })
-            );
-        } catch (error) {
-             toast({
-                title: 'Error Generating Sizes',
-                description: 'Could not generate sizes for the zip file.',
-                variant: 'destructive'
-            });
-            return;
-        }
-    }
-
-    if (currentGeneratedSizes.length === 0) {
-        toast({
-            title: 'No sizes generated',
-            description: 'Could not generate sizes for the zip file. Please try generating them manually first.',
-            variant: 'destructive'
-        });
-        return;
-    }
-
-    const zip = new JSZip();
-
-    currentGeneratedSizes.forEach(({ size, dataUrl }) => {
-      const base64Data = dataUrl.split(',')[1];
-       if(size === 180) {
-          zip.file(`apple-touch-icon.png`, base64Data, { base64: true });
-       }
-       if (size === 192) {
-          zip.file(`android-chrome-192x192.png`, base64Data, { base64: true });
-       }
-       if (size === 512) {
-          zip.file(`android-chrome-512x512.png`, base64Data, { base64: true });
-       }
-      zip.file(`favicon-${size}x${size}.png`, base64Data, { base64: true });
-    });
-    
-    if (faviconSrc) {
-        try {
-            const icoUrl = await resizeImage(faviconSrc, 32);
-            const base64Data = icoUrl.split(',')[1];
-            zip.file(`favicon.ico`, base64Data, { base64: true });
-        } catch (error) {
-            console.error("Could not generate favicon.ico for the zip file.");
-        }
-    }
-
-    zip.file('site.webmanifest', getWebmanifestContent());
-    zip.file('index.html', getFullHtmlPage());
+    const zip = await createZip();
+    if (!zip) return;
 
     const zipBlob = await zip.generateAsync({ type: 'blob' });
     const link = document.createElement('a');
@@ -308,6 +317,7 @@ setShowSizes(false);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setIsExportDialogOpen(false);
   };
 
   const getHtmlCode = () => {
@@ -394,6 +404,8 @@ setShowSizes(false);
             getWebmanifestContent={getWebmanifestContent}
             handleDownloadIco={handleDownloadIco}
             generatedSizes={generatedSizes}
+            isExportDialogOpen={isExportDialogOpen}
+            setIsExportDialogOpen={setIsExportDialogOpen}
         />
 
       <main className="flex-1 flex flex-col">
@@ -445,12 +457,12 @@ setShowSizes(false);
                         </ScrollArea>
                     </CardContent>
                     <CardFooter className="border-t pt-6 flex items-center gap-2">
-                        <Button onClick={handleShare} disabled={!faviconSrc} variant="outline" size="lg" className="h-11 w-11 p-0 flex-shrink-0">
-                            <Share2 className="h-5 w-5" />
-                        </Button>
-                         <Button className="w-full" size="lg" onClick={() => setIsExportDialogOpen(true)}>
+                        <Button className="w-full" size="lg" onClick={() => setIsExportDialogOpen(true)}>
                           <Package className="mr-2 h-4 w-4" />
                           Export All
+                        </Button>
+                        <Button onClick={handleShare} disabled={!faviconSrc} variant="outline" size="lg" className="h-11 w-11 p-0 flex-shrink-0">
+                            <Share2 className="h-5 w-5" />
                         </Button>
                     </CardFooter>
                 </Card>
