@@ -1,27 +1,28 @@
+
 import type { Metadata } from 'next';
 import HomePageContent from '@/app/home-page-content';
 import { SeoSection } from '@/components/seo-section';
 
 export const metadata: Metadata = {
-  title: 'Favicon Generator | Create and Generate Favicons Instantly',
-  description: 'A modern, intuitive favicon creation app for generating pixel-perfect site icons. Upload an image, use AI to generate variations, and export all necessary sizes in one click.',
-  keywords: ['favicon generator', 'favicon creator', 'icon generator', 'apple touch icon', 'android chrome icon', 'site icon', 'free favicon', 'online favicon tool', 'AI favicon'],
+  title: 'Free AI Favicon Generator for All Devices & Browsers',
+  description: 'Create the perfect favicon for free with our AI-powered generator. Design, edit, and instantly export a complete favicon package for iOS, Android, Windows, and all web browsers. Get every size you need in one click.',
+  keywords: ['favicon generator', 'free favicon generator', 'ai favicon generator', 'favicon creator', 'icon generator', 'apple touch icon', 'android chrome icon', 'site icon', 'create favicon', 'custom favicon', 'online favicon tool', 'favicon for all devices'],
   openGraph: {
-    title: 'Favicon Generator | Create and Generate Favicons Instantly',
-    description: 'The ultimate tool for creating beautiful, production-ready favicons. Use AI to explore ideas and export a complete package for your website.',
+    title: 'Free AI Favicon Generator for All Devices & Browsers',
+    description: 'The ultimate free tool for creating beautiful, production-ready favicons. Use AI to explore ideas, customize with our editor, and export a complete package for your website in seconds.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Favicon app interface showing a favicon being edited.',
+        alt: 'Favicon app interface showing a favicon being edited on a canvas with tools nearby.',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Favicon Generator | Create and Generate Favicons Instantly',
-    description: 'The ultimate tool for creating beautiful, production-ready favicons. Use AI to explore ideas and export a complete package for your website.',
+    title: 'Free AI Favicon Generator for All Devices & Browsers',
+    description: 'The ultimate free tool for creating beautiful, production-ready favicons. Use AI to explore ideas, customize with our editor, and export a complete package for your website in seconds.',
     images: ['/twitter-og-image.png'], 
   },
 };
@@ -34,3 +35,6 @@ export default function Home() {
     </div>
   );
 }
+
+
+    

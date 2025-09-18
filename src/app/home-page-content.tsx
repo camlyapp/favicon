@@ -183,7 +183,8 @@ export default function HomePageContent() {
         }
     } catch (error) {
         console.error("Sharing failed:", error);
-        toast({ title: "Sharing failed", description: "Could not share the file.", variant: "destructive" });
+        toast({ title: "Sharing failed", description: "Could not share the file. Your browser may not support this feature.", variant: "destructive" });
+        handleDownloadZip();
     }
   };
 
@@ -374,10 +375,10 @@ export default function HomePageContent() {
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col items-center space-y-4">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-400">
-                    The Ultimate Favicon Generator
+                    Free AI Favicon Generator for All Devices
                 </h1>
                 <p className="max-w-[700px] text-muted-foreground md:text-xl">
-                    Create the perfect icon for your brand. Upload an image, use AI to generate variations, customize in our editor, and export a complete package for your website in one click.
+                    Effortlessly create a professional favicon for your brand. Upload an image, customize it in our powerful editor, and instantly generate a complete favicon package for your website, including iOS, Android, and all web browsers.
                 </p>
                 <Button size="lg" onClick={handleScrollToUploader}>
                     Get Started <ArrowDown className="ml-2 h-4 w-4" />
@@ -463,5 +464,7 @@ export default function HomePageContent() {
     </>
   );
 }
+
+    
 
     
