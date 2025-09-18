@@ -368,10 +368,10 @@ setShowSizes(false);
         />
 
       <main className="flex-1 flex flex-col">
-          <section className="w-full py-20 md:py-32 lg:py-40 xl:py-48 text-center bg-gradient-to-br from-background via-purple-50/50 to-background animate-gradient-xy">
+          <section className="w-full py-20 md:py-32 lg:py-40 xl:py-48 text-center bg-gradient-to-br from-background via-yellow-50/50 to-background animate-gradient-xy">
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col items-center space-y-4">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-400">
                     The Ultimate Favicon Generator
                 </h1>
                 <p className="max-w-[700px] text-muted-foreground md:text-xl">
