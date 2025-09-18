@@ -23,6 +23,8 @@ import {
     Bold,
     ArrowUp,
     ArrowDown,
+    Plus,
+    Minus
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -406,6 +408,22 @@ export default function EditorPageContent() {
     });
   }
 
+  const adjustSize = (amount: number) => {
+    if (!selectedElement || selectedElement.type !== 'shape') return;
+    
+    const newWidth = selectedElement.width + amount;
+    const newHeight = selectedElement.height + amount;
+
+    if (newWidth > 10 && newHeight > 10) {
+        updateSelectedElement({
+            width: newWidth,
+            height: newHeight,
+            x: selectedElement.x - amount / 2,
+            y: selectedElement.y - amount / 2,
+        });
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -496,6 +514,13 @@ export default function EditorPageContent() {
                                     <div>
                                         <Label>Border Width: {strokeWidth}px</Label>
                                         <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} min={0} max={50} step={1}/>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Size</Label>
+                                        <div className="flex gap-2">
+                                            <Button className="w-full" variant="outline" onClick={() => adjustSize(-10)}><Minus className="mr-2 h-4 w-4"/> Decrease</Button>
+                                            <Button className="w-full" variant="outline" onClick={() => adjustSize(10)}><Plus className="mr-2 h-4 w-4"/> Increase</Button>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -610,5 +635,7 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
+    
 
     
