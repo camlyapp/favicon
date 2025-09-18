@@ -17,7 +17,8 @@ import {
     X,
     Pencil,
     Package,
-    ArrowDown
+    ArrowDown,
+    Share2
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -385,7 +386,6 @@ setShowSizes(false);
             onGoToEditor={handleGoToEditor}
             onGenerateAllSizes={handleGenerateAllSizes}
             onGenerateVariations={onGenerateVariations}
-            onShare={handleShare}
             isPending={isPending}
             faviconSrc={faviconSrc}
             handleDownloadZip={handleDownloadZip}
@@ -444,7 +444,10 @@ setShowSizes(false);
                             </div>
                         </ScrollArea>
                     </CardContent>
-                    <CardFooter className="border-t pt-6">
+                    <CardFooter className="border-t pt-6 flex items-center gap-2">
+                        <Button onClick={handleShare} disabled={!faviconSrc} variant="outline" size="lg" className="h-11 w-11 p-0 flex-shrink-0">
+                            <Share2 className="h-5 w-5" />
+                        </Button>
                          <Button className="w-full" size="lg" onClick={() => setIsExportDialogOpen(true)}>
                           <Package className="mr-2 h-4 w-4" />
                           Export All
@@ -499,5 +502,3 @@ setShowSizes(false);
     </>
   );
 }
-
-    
