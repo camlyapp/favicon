@@ -165,9 +165,9 @@ export function AppHeader({
                         <ArrowLeft className="w-5 h-5" />
                     </Button>
                 ) : (
-                     <Link href="/" className="flex items-center gap-2">
-                        <Image src="/camly.png" alt="Camly logo" width={28} height={28} />
-                        <h1 className="text-xl font-bold hidden sm:inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-400">Favicon</h1>
+                     <Link href="/" className="relative flex items-center justify-center h-8">
+                        <Image src="/camly.png" alt="Camly logo" width={28} height={28} className="absolute" />
+                        <h1 className="relative text-xl font-bold hidden sm:inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-400">Favicon</h1>
                     </Link>
                 )}
                  {isEditorPage && <h1 className="text-xl font-bold">Editor</h1>}
