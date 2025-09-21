@@ -543,7 +543,7 @@ export default function EditorPageContent() {
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-2 overflow-y-auto">
              <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
                 <AccordionItem value="item-1">
-                    <AccordionTrigger className="p-3 text-sm font-semibold">Canvas & Shapes</AccordionTrigger>
+                    <AccordionTrigger className="p-3 text-sm font-semibold">Canvas &amp; Shapes</AccordionTrigger>
                     <AccordionContent className="p-2 space-y-2">
                         <div className="space-y-2 p-2 rounded-lg bg-muted/50">
                             <Label className="text-xs">New Canvas</Label>
