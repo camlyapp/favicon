@@ -144,20 +144,7 @@ export default function EditorPageContent() {
         ctx.globalAlpha = el.opacity ?? 1;
 
         if(el.type === 'image' && el.img) {
-             const imgAspectRatio = el.img.width / el.img.height;
-             let drawWidth = canvas.width;
-             let drawHeight = canvas.height;
-             
-             if (el.img.width > el.img.height) {
-                drawHeight = canvas.width / imgAspectRatio;
-             } else {
-                drawWidth = canvas.width * imgAspectRatio;
-             }
-
-             const xOffset = (canvas.width - drawWidth) / 2;
-             const yOffset = (canvas.height - drawHeight) / 2;
-             
-             ctx.drawImage(el.img, xOffset, yOffset, drawWidth, drawHeight);
+             ctx.drawImage(el.img, el.x, el.y, el.width, el.height);
         } else if (el.type === 'shape' && el.color && el.shape) {
             ctx.fillStyle = el.color;
              if (el.strokeWidth && el.strokeWidth > 0 && el.strokeColor) {
@@ -198,7 +185,7 @@ export default function EditorPageContent() {
             ctx.lineWidth = 4;
             ctx.strokeRect(el.x-2, el.y-2, el.width+4, el.height+4);
 
-            if (el.type === 'shape') {
+            if (el.type === 'shape' || el.type === 'image') {
                 ctx.fillStyle = '#007BFF';
                 ctx.fillRect(el.x - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
                 ctx.fillRect(el.x + el.width - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
@@ -363,7 +350,7 @@ export default function EditorPageContent() {
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
     
-    if (selectedElement && selectedElement.type === 'shape') {
+    if (selectedElement && (selectedElement.type === 'shape' || selectedElement.type === 'image')) {
         const handle = getHandleAt(mouseX, mouseY, selectedElement);
         if (handle) {
             return { element: selectedElement, handle };
@@ -372,7 +359,6 @@ export default function EditorPageContent() {
 
     for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
-        if (el.type === 'image') continue; 
         if (mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
             return { element: el, handle: null };
         }
@@ -671,7 +657,7 @@ export default function EditorPageContent() {
                  </AccordionItem>
                 )}
 
-                {selectedElementId && selectedElement?.type !== 'image' && (
+                {selectedElementId && (
                     <AccordionItem value="item-5">
                         <AccordionTrigger className="p-3 text-sm font-semibold">Element Properties</AccordionTrigger>
                         <AccordionContent className="p-2 space-y-2">
@@ -681,13 +667,13 @@ export default function EditorPageContent() {
                                     <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} onValueCommit={saveStateToHistory} min={0} max={1} step={0.01}/>
                                 </div>
 
-                                 <div className="space-y-1">
+                                 {selectedElement?.type !== 'image' && <div className="space-y-1">
                                     <Label className="text-xs">Layer</Label>
                                     <div className="flex gap-2">
                                         <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-3 w-3"/> Backward</Button>
                                         <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-3 w-3"/> Forward</Button>
                                     </div>
-                                </div>
+                                </div>}
 
                                 <Button variant="destructive" size="sm" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full h-8 text-xs">
                                     <Trash2 className="mr-2 h-3 w-3" /> Delete
