@@ -206,15 +206,20 @@ export default function EditorPageContent() {
        const img = new window.Image();
         img.onload = () => {
             const canvasSize = EDITOR_RESOLUTION;
-            const imgAspectRatio = img.width / img.height;
-            let width, height;
+            let width = img.width;
+            let height = img.height;
+            const imgAspectRatio = width / height;
 
-            if (img.width > img.height) {
-                width = canvasSize;
-                height = canvasSize / imgAspectRatio;
+            if (width > height) {
+                if (width > canvasSize) {
+                    width = canvasSize;
+                    height = width / imgAspectRatio;
+                }
             } else {
-                height = canvasSize;
-                width = canvasSize * imgAspectRatio;
+                if (height > canvasSize) {
+                    height = canvasSize;
+                    width = height * imgAspectRatio;
+                }
             }
 
             const x = (canvasSize - width) / 2;
@@ -424,27 +429,29 @@ export default function EditorPageContent() {
         let { x, y, width, height } = selectedElement;
         const dx = mouseX - dragStart.x;
         const dy = mouseY - dragStart.y;
+        
+        const aspectRatio = selectedElement.type === 'image' ? selectedElement.width / selectedElement.height : 0;
 
         switch (isResizing) {
             case 'top-left':
                 width -= dx;
-                height -= dy;
+                if (aspectRatio) height = width / aspectRatio; else height -= dy;
                 x += dx;
                 y += dy;
                 break;
             case 'top-right':
                 width += dx;
-                height -= dy;
+                if (aspectRatio) height = width / aspectRatio; else height -= dy;
                 y += dy;
                 break;
             case 'bottom-left':
                 width -= dx;
-                height += dy;
+                if (aspectRatio) height = width / aspectRatio; else height += dy;
                 x += dx;
                 break;
             case 'bottom-right':
                 width += dx;
-                height += dy;
+                if (aspectRatio) height = width / aspectRatio; else height += dy;
                 break;
         }
 
@@ -492,8 +499,6 @@ export default function EditorPageContent() {
             color: textColor,
             width: textMetrics.width,
             height: fontSize,
-            x: (EDITOR_RESOLUTION - textMetrics.width) / 2,
-            y: (EDITOR_RESOLUTION - fontSize) / 2
         });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -725,3 +730,5 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
+    

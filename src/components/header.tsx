@@ -206,8 +206,8 @@ export function AppHeader({
                             <span className="hidden sm:inline">Edit</span>
                         </Button>
                         <Button onClick={onGenerateAllSizes} disabled={!faviconSrc} variant="outline" size="sm">
-                            <Sparkles className="mr-0 sm:mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Generate</span>
+                            <Eye className="mr-0 sm:mr-2 h-4 w-4" />
+                            <span className="hidden sm:inline">Preview</span>
                         </Button>
                         {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && isExportDialogOpen !== undefined && setIsExportDialogOpen !== undefined && (
                              <ExportDialog
@@ -232,3 +232,5 @@ export function AppHeader({
         </header>
     );
 }
+
+    
