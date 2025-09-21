@@ -27,7 +27,8 @@ import {
     Minus,
     Undo,
     Redo,
-    Pencil
+    Pencil,
+    Eraser
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -101,7 +102,7 @@ export default function EditorPageContent() {
   
   const [drawColor, setDrawColor] = useState('#000000');
   const [drawStrokeWidth, setDrawStrokeWidth] = useState(10);
-  const [activeTool, setActiveTool] = useState<'select' | 'pencil'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'pencil' | 'eraser'>('select');
   const [isDrawing, setIsDrawing] = useState(false);
 
   const [elementOpacity, setElementOpacity] = useState(1);
@@ -450,6 +451,12 @@ export default function EditorPageContent() {
         return;
     }
 
+    if (activeTool === 'eraser') {
+      setIsDrawing(true);
+      // No new element, we are erasing existing ones
+      return;
+    }
+
     const { element, handle } = getElementAt(e);
 
     if (handle && element) {
@@ -475,20 +482,36 @@ export default function EditorPageContent() {
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
     
-    if (isDrawing && activeTool === 'pencil' && selectedElement?.type === 'path') {
-        const newPoints = [...selectedElement.points!, {x: mouseX, y: mouseY}];
-        const minX = Math.min(...newPoints.map(p => p.x));
-        const minY = Math.min(...newPoints.map(p => p.y));
-        const maxX = Math.max(...newPoints.map(p => p.x));
-        const maxY = Math.max(...newPoints.map(p => p.y));
-        updateSelectedElement({
-            points: newPoints,
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY
-        });
-        return;
+    if (isDrawing) {
+        if(activeTool === 'pencil' && selectedElement?.type === 'path') {
+            const newPoints = [...selectedElement.points!, {x: mouseX, y: mouseY}];
+            const minX = Math.min(...newPoints.map(p => p.x));
+            const minY = Math.min(...newPoints.map(p => p.y));
+            const maxX = Math.max(...newPoints.map(p => p.x));
+            const maxY = Math.max(...newPoints.map(p => p.y));
+            updateSelectedElement({
+                points: newPoints,
+                x: minX,
+                y: minY,
+                width: maxX - minX,
+                height: maxY - minY
+            });
+            return;
+        } else if (activeTool === 'eraser') {
+            const eraserSize = drawStrokeWidth;
+            setElements(prev => prev.filter(el => {
+                if (el.type !== 'path' || !el.points) return true;
+                
+                for(const point of el.points) {
+                     const distance = Math.sqrt(Math.pow(point.x - mouseX, 2) + Math.pow(point.y - mouseY, 2));
+                     if (distance < eraserSize / 2 + (el.strokeWidth || 5) / 2) {
+                        return false; // delete element
+                     }
+                }
+                return true;
+            }));
+            return;
+        }
     }
 
     if (!selectedElement) return;
@@ -536,7 +559,7 @@ export default function EditorPageContent() {
         const { handle } = getElementAt(e);
         if (handle) {
             canvas.style.cursor = 'nwse-resize'; // A generic resize cursor
-        } else if (activeTool === 'pencil') {
+        } else if (activeTool === 'pencil' || activeTool === 'eraser') {
             canvas.style.cursor = 'crosshair';
         } else {
             canvas.style.cursor = 'default';
@@ -682,15 +705,18 @@ export default function EditorPageContent() {
                         <div className="space-y-2 p-2 rounded-lg bg-muted/50">
                              <div className="flex justify-start gap-2">
                                 <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
                             </div>
                              <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                    <Label htmlFor="draw-color" className="text-xs">Color</Label>
-                                    <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-8 w-full cursor-pointer" />
-                                </div>
+                                {activeTool === 'pencil' && (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="draw-color" className="text-xs">Color</Label>
+                                        <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-8 w-full cursor-pointer" />
+                                    </div>
+                                )}
                             </div>
                             <div>
-                                <Label className="text-xs">Line Width: {drawStrokeWidth}px</Label>
+                                <Label className="text-xs">{activeTool === 'eraser' ? 'Eraser' : 'Line'} Width: {drawStrokeWidth}px</Label>
                                 <Slider value={[drawStrokeWidth]} onValueChange={(v) => setDrawStrokeWidth(v[0])} min={1} max={100} step={1}/>
                             </div>
                         </div>
@@ -813,7 +839,7 @@ export default function EditorPageContent() {
                       linear-gradient(-45deg, transparent 75%, #eee 75%)`,
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    cursor: isDragging || isResizing ? 'grabbing' : (activeTool === 'pencil' ? 'crosshair' : 'default'),
+                    cursor: isDragging || isResizing ? 'grabbing' : (activeTool === 'pencil' || activeTool === 'eraser' ? 'crosshair' : 'default'),
                 }}
                 onMouseDown={handleMouseDown}
             >
@@ -824,5 +850,3 @@ export default function EditorPageContent() {
     </div>
   );
 }
-
-    
