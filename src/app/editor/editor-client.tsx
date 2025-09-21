@@ -26,7 +26,8 @@ import {
     Plus,
     Minus,
     Undo,
-    Redo
+    Redo,
+    Pencil
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -43,7 +44,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 interface CanvasElement {
     id: string;
-    type: 'shape' | 'text' | 'image';
+    type: 'shape' | 'text' | 'image' | 'path';
     x: number;
     y: number;
     width: number;
@@ -59,6 +60,7 @@ interface CanvasElement {
     opacity?: number;
     strokeWidth?: number;
     strokeColor?: string;
+    points?: {x: number, y: number}[];
 }
 
 interface HistoryState {
@@ -96,6 +98,11 @@ export default function EditorPageContent() {
   const [shapeColor, setShapeColor] = useState('#A050C3');
   const [strokeColor, setStrokeColor] = useState('#000000');
   const [strokeWidth, setStrokeWidth] = useState(0);
+  
+  const [drawColor, setDrawColor] = useState('#000000');
+  const [drawStrokeWidth, setDrawStrokeWidth] = useState(10);
+  const [activeTool, setActiveTool] = useState<'select' | 'pencil'>('select');
+  const [isDrawing, setIsDrawing] = useState(false);
 
   const [elementOpacity, setElementOpacity] = useState(1);
   
@@ -178,6 +185,17 @@ export default function EditorPageContent() {
             }
             
             ctx.fillText(el.text, x, el.y);
+        } else if (el.type === 'path' && el.points && el.points.length > 0) {
+            ctx.strokeStyle = el.color || '#000000';
+            ctx.lineWidth = el.strokeWidth || 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(el.points[0].x, el.points[0].y);
+            for(let i = 1; i < el.points.length; i++) {
+                ctx.lineTo(el.points[i].x, el.points[i].y);
+            }
+            ctx.stroke();
         }
         
         if (el.id === selectedElementId) {
@@ -287,6 +305,7 @@ export default function EditorPageContent() {
   const handleSave = () => {
     if (canvasRef.current) {
         setSelectedElementId(null);
+        setActiveTool('select');
         setTimeout(() => {
              if (canvasRef.current) {
                 const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -320,6 +339,7 @@ export default function EditorPageContent() {
     };
     setElements(prev => [...prev, newShape]);
     setSelectedElementId(newShape.id);
+    setActiveTool('select');
   }
 
   const addText = () => {
@@ -342,6 +362,7 @@ export default function EditorPageContent() {
     };
     setElements(prev => [...prev, newText]);
     setSelectedElementId(newText.id);
+    setActiveTool('select');
   };
 
   const deleteSelectedElement = () => {
@@ -376,9 +397,25 @@ export default function EditorPageContent() {
         }
     }
 
+    // Check path elements with a small tolerance
     for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
-        if (mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
+         if (el.type === 'path' && el.points) {
+            for(let j = 0; j < el.points.length-1; j++) {
+                // simple line collision check for now
+                const p1 = el.points[j];
+                const p2 = el.points[j+1];
+                const dist = Math.abs((p2.y - p1.y) * mouseX - (p2.x - p1.x) * mouseY + p2.x * p1.y - p2.y * p1.x) / Math.sqrt(Math.pow(p2.y-p1.y, 2) + Math.pow(p2.x - p1.x, 2));
+                if (dist < (el.strokeWidth || 5) / 2 + 5) { // 5px tolerance
+                     return { element: el, handle: null };
+                }
+            }
+        }
+    }
+
+    for (let i = elements.length - 1; i >= 0; i--) {
+        const el = elements[i];
+        if (el.type !== 'path' && mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
             return { element: el, handle: null };
         }
     }
@@ -387,28 +424,41 @@ export default function EditorPageContent() {
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mouseX = (e.clientX - rect.left) * scaleX;
+    const mouseY = (e.clientY - rect.top) * scaleY;
+
+    if (activeTool === 'pencil') {
+        setIsDrawing(true);
+        const newPath: CanvasElement = {
+            id: `path_${Date.now()}`,
+            type: 'path',
+            x: mouseX,
+            y: mouseY,
+            width: 0,
+            height: 0,
+            points: [{x: mouseX, y: mouseY}],
+            color: drawColor,
+            strokeWidth: drawStrokeWidth,
+            opacity: 1
+        };
+        setElements(prev => [...prev, newPath]);
+        setSelectedElementId(newPath.id);
+        return;
+    }
 
     const { element, handle } = getElementAt(e);
 
     if (handle && element) {
         setIsResizing(handle);
         setSelectedElementId(element.id);
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
         setDragStart({x: mouseX, y: mouseY});
     } else if (element) {
         setSelectedElementId(element.id);
         setIsDragging(true);
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
         setDragStart({ x: mouseX - element.x, y: mouseY - element.y });
     } else {
         setSelectedElementId(null);
@@ -416,7 +466,7 @@ export default function EditorPageContent() {
   }
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current || !selectedElement) return;
+    if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -424,6 +474,24 @@ export default function EditorPageContent() {
     const scaleY = canvas.height / rect.height;
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
+    
+    if (isDrawing && activeTool === 'pencil' && selectedElement?.type === 'path') {
+        const newPoints = [...selectedElement.points!, {x: mouseX, y: mouseY}];
+        const minX = Math.min(...newPoints.map(p => p.x));
+        const minY = Math.min(...newPoints.map(p => p.y));
+        const maxX = Math.max(...newPoints.map(p => p.x));
+        const maxY = Math.max(...newPoints.map(p => p.y));
+        updateSelectedElement({
+            points: newPoints,
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        });
+        return;
+    }
+
+    if (!selectedElement) return;
 
     if (isResizing) {
         let { x, y, width, height } = selectedElement;
@@ -468,6 +536,8 @@ export default function EditorPageContent() {
         const { handle } = getElementAt(e);
         if (handle) {
             canvas.style.cursor = 'nwse-resize'; // A generic resize cursor
+        } else if (activeTool === 'pencil') {
+            canvas.style.cursor = 'crosshair';
         } else {
             canvas.style.cursor = 'default';
         }
@@ -475,6 +545,10 @@ export default function EditorPageContent() {
   }
 
   const handleMouseUp = () => {
+    if (isDrawing) {
+        setIsDrawing(false);
+        saveStateToHistory();
+    }
     if (isDragging || isResizing) {
       saveStateToHistory();
     }
@@ -560,7 +634,7 @@ export default function EditorPageContent() {
       />
       <main className="flex-1 grid grid-cols-3 gap-0">
         <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-2 overflow-y-auto">
-             <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5']} className="w-full">
+             <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6']} className="w-full">
                 <AccordionItem value="item-1">
                     <AccordionTrigger className="p-3 text-sm font-semibold">Canvas &amp; Shapes</AccordionTrigger>
                     <AccordionContent className="p-2 space-y-2">
@@ -599,6 +673,26 @@ export default function EditorPageContent() {
                                 <Type className="mr-2 h-3 w-3" />
                                 Add Text
                             </Button>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+                 <AccordionItem value="item-6">
+                    <AccordionTrigger className="p-3 text-sm font-semibold">Drawing Tools</AccordionTrigger>
+                    <AccordionContent className="p-2 space-y-2">
+                        <div className="space-y-2 p-2 rounded-lg bg-muted/50">
+                             <div className="flex justify-start gap-2">
+                                <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                            </div>
+                             <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <Label htmlFor="draw-color" className="text-xs">Color</Label>
+                                    <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-8 w-full cursor-pointer" />
+                                </div>
+                            </div>
+                            <div>
+                                <Label className="text-xs">Line Width: {drawStrokeWidth}px</Label>
+                                <Slider value={[drawStrokeWidth]} onValueChange={(v) => setDrawStrokeWidth(v[0])} min={1} max={100} step={1}/>
+                            </div>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
@@ -719,7 +813,7 @@ export default function EditorPageContent() {
                       linear-gradient(-45deg, transparent 75%, #eee 75%)`,
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                    cursor: isDragging || isResizing ? 'grabbing' : 'default',
+                    cursor: isDragging || isResizing ? 'grabbing' : (activeTool === 'pencil' ? 'crosshair' : 'default'),
                 }}
                 onMouseDown={handleMouseDown}
             >
