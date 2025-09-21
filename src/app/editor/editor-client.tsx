@@ -205,14 +205,28 @@ export default function EditorPageContent() {
       setFaviconSrc(imageToEdit);
        const img = new window.Image();
         img.onload = () => {
-            const size = EDITOR_RESOLUTION;
+            const canvasSize = EDITOR_RESOLUTION;
+            const imgAspectRatio = img.width / img.height;
+            let width, height;
+
+            if (img.width > img.height) {
+                width = canvasSize;
+                height = canvasSize / imgAspectRatio;
+            } else {
+                height = canvasSize;
+                width = canvasSize * imgAspectRatio;
+            }
+
+            const x = (canvasSize - width) / 2;
+            const y = (canvasSize - height) / 2;
+            
              const newImageElement: CanvasElement = {
                 id: `img_${Date.now()}`,
                 type: 'image',
-                x: 0,
-                y: 0,
-                width: size,
-                height: size,
+                x: x,
+                y: y,
+                width: width,
+                height: height,
                 img: img,
                 opacity: 1,
              };
