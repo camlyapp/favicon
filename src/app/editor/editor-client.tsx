@@ -675,8 +675,8 @@ export default function EditorPageContent() {
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
       />
-      <main className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0">
-        <aside className="col-span-1 md:col-span-1 border-r border-border flex flex-col p-4">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-0">
+        <aside className="col-span-1 md:col-span-2 border-r border-border flex flex-col p-4">
              <Card className="w-full">
                 <CardHeader>
                     <CardTitle className="text-xl">Editor Tools</CardTitle>
@@ -880,7 +880,7 @@ export default function EditorPageContent() {
             </Card>
         </aside>
         <div 
-          className="col-span-1 md:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
+          className="col-span-1 md:col-span-3 flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}
           onMouseUp={handleInteractionEnd}
           onMouseLeave={handleInteractionEnd}
