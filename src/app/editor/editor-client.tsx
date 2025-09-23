@@ -28,7 +28,8 @@ import {
     Undo,
     Redo,
     Pencil,
-    Eraser
+    Eraser,
+    ChevronDown
 } from 'lucide-react';
 import { AppHeader } from '@/components/header';
 import { Slider } from '@/components/ui/slider';
@@ -43,6 +44,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 interface CanvasElement {
@@ -727,22 +729,27 @@ export default function EditorPageContent() {
 
                             <Separator />
                             
-                             {/* Text Content */}
-                            <div>
-                                <h3 className="text-sm font-semibold mb-2">Text Content</h3>
-                                <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="text-input" className="text-xs">Content</Label>
-                                            <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
-                                        </div>
-                                         <div className="space-y-1">
-                                           <Label htmlFor="text-color" className="text-xs">Color</Label>
-                                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                             <Collapsible>
+                                <CollapsibleTrigger className="flex items-center justify-between w-full">
+                                    <h3 className="text-sm font-semibold">Text Content</h3>
+                                    <ChevronDown className="h-4 w-4" />
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <div className="space-y-2 p-2 rounded-lg bg-muted/50 mt-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="text-input" className="text-xs">Content</Label>
+                                                <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
+                                            </div>
+                                             <div className="space-y-1">
+                                               <Label htmlFor="text-color" className="text-xs">Color</Label>
+                                                <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </CollapsibleContent>
+                            </Collapsible>
+                            
                             
                             {/* Drawing Tools */}
                              {(activeTool === 'pencil' || activeTool === 'eraser') && 
@@ -916,3 +923,5 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
+    
