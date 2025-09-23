@@ -40,7 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from '@/components/ui/switch';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 interface CanvasElement {
@@ -670,172 +671,180 @@ export default function EditorPageContent() {
         canRedo={historyIndex < history.length - 1}
       />
       <main className="flex-1 grid grid-cols-3 gap-0">
-        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4 space-y-2 overflow-y-auto">
-             <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4', 'item-5', 'item-6']} className="w-full">
-                <AccordionItem value="item-1">
-                    <AccordionTrigger className="p-3 text-sm font-semibold">Canvas &amp; Shapes</AccordionTrigger>
-                    <AccordionContent className="p-2 space-y-2">
-                        <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                            <Label className="text-xs">New Canvas</Label>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" className="w-full text-xs" variant="secondary" onClick={handleNewCanvas}>
-                                    <RefreshCw className="mr-2 h-3 w-3" /> New
-                                </Button>
-                            </div>
-                        </div>
-                         <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                            <Label className="text-xs">Shapes</Label>
-                            <div className="flex justify-start gap-2">
-                                <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
-                                <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
-                            </div>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                    <AccordionTrigger className="p-3 text-sm font-semibold">Text Tools</AccordionTrigger>
-                    <AccordionContent className="p-2 space-y-2">
-                        <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-1">
-                                    <Label htmlFor="text-input" className="text-xs">Content</Label>
-                                    <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
-                                </div>
-                                 <div className="space-y-1">
-                                   <Label htmlFor="text-color" className="text-xs">Color</Label>
-                                    <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
-                                </div>
-                            </div>
-                             <Button className="w-full h-8 text-xs" variant="outline" onClick={addText} disabled={!textInput}>
-                                <Type className="mr-2 h-3 w-3" />
-                                Add Text
-                            </Button>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-                 <AccordionItem value="item-6">
-                    <AccordionTrigger className="p-3 text-sm font-semibold">Drawing Tools</AccordionTrigger>
-                    <AccordionContent className="p-2 space-y-2">
-                        <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                             <div className="flex justify-start gap-2">
-                                <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
-                                <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
-                            </div>
-                             <div className="grid grid-cols-2 gap-2">
-                                {activeTool === 'pencil' && (
-                                    <div className="space-y-1">
-                                        <Label htmlFor="draw-color" className="text-xs">Color</Label>
-                                        <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-8 w-full cursor-pointer" />
-                                    </div>
-                                )}
-                            </div>
+        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4">
+             <Card className="w-full">
+                <CardHeader>
+                    <CardTitle className="text-xl">Editor Tools</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+                        <div className="space-y-4">
+                            {/* Canvas & Shapes */}
                             <div>
-                                <Label className="text-xs">{activeTool === 'eraser' ? 'Eraser' : 'Line'} Width: {drawStrokeWidth}px</Label>
-                                <Slider value={[drawStrokeWidth]} onValueChange={(v) => setDrawStrokeWidth(v[0])} min={1} max={100} step={1}/>
-                            </div>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-
-                 {selectedElement?.type === 'shape' && (
-                    <AccordionItem value="item-3">
-                        <AccordionTrigger className="p-3 text-sm font-semibold">Shape Properties</AccordionTrigger>
-                        <AccordionContent className="p-2 space-y-2">
-                             <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                                 <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="shape-color" className="text-xs">Fill Color</Label>
-                                        <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="stroke-color" className="text-xs">Border Color</Label>
-                                        <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                <h3 className="text-sm font-semibold mb-2">Canvas & Shapes</h3>
+                                <div className="space-y-2 p-2 rounded-lg bg-muted/50">
+                                    <Label className="text-xs">New Canvas</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Button size="sm" className="w-full text-xs" variant="secondary" onClick={handleNewCanvas}>
+                                            <RefreshCw className="mr-2 h-3 w-3" /> New
+                                        </Button>
                                     </div>
                                 </div>
+                                <div className="space-y-2 p-2 rounded-lg bg-muted/50 mt-2">
+                                    <Label className="text-xs">Shapes</Label>
+                                    <div className="flex justify-start gap-2">
+                                        <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
+                                        <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <Separator />
+
+                            {/* Text Tools */}
+                            <div>
+                                <h3 className="text-sm font-semibold mb-2">Text Tools</h3>
+                                <div className="space-y-2 p-2 rounded-lg bg-muted/50">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="text-input" className="text-xs">Content</Label>
+                                            <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
+                                        </div>
+                                         <div className="space-y-1">
+                                           <Label htmlFor="text-color" className="text-xs">Color</Label>
+                                            <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                        </div>
+                                    </div>
+                                     <Button className="w-full h-8 text-xs" variant="outline" onClick={addText} disabled={!textInput}>
+                                        <Type className="mr-2 h-3 w-3" />
+                                        Add Text
+                                    </Button>
+                                </div>
+                            </div>
+                            <Separator />
+                            
+                            {/* Drawing Tools */}
+                             <div>
+                                <h3 className="text-sm font-semibold mb-2">Drawing Tools</h3>
+                                <div className="space-y-2 p-2 rounded-lg bg-muted/50">
+                                     <div className="flex justify-start gap-2">
+                                        <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                        <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
+                                    </div>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {activeTool === 'pencil' && (
+                                            <div className="space-y-1">
+                                                <Label htmlFor="draw-color" className="text-xs">Color</Label>
+                                                <Input id="draw-color" type="color" value={drawColor} onChange={(e) => setDrawColor(e.target.value)} className="p-1 h-8 w-full cursor-pointer" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs">{activeTool === 'eraser' ? 'Eraser' : 'Line'} Width: {drawStrokeWidth}px</Label>
+                                        <Slider value={[drawStrokeWidth]} onValueChange={(v) => setDrawStrokeWidth(v[0])} min={1} max={100} step={1}/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Conditional Properties */}
+                            {selectedElement && <Separator />}
+
+                            {/* Shape Properties */}
+                            {selectedElement?.type === 'shape' && (
                                 <div>
-                                    <Label className="text-xs">Border Width: {strokeWidth}px</Label>
-                                    <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} onValueCommit={saveStateToHistory} min={0} max={50} step={1}/>
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                )}
-                
-                {selectedElement?.type === 'text' && (
-                 <AccordionItem value="item-4">
-                    <AccordionTrigger className="p-3 text-sm font-semibold">Typography</AccordionTrigger>
-                    <AccordionContent className="p-2 space-y-2">
-                        <div className="p-2 rounded-lg bg-muted/50 space-y-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                 <div>
-                                    <Label className="text-xs">Font Family</Label>
-                                    <Select value={fontFamily} onValueChange={(v) => {setFontFamily(v); saveStateToHistory()}}>
-                                      <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Select a font" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
-                                        <SelectItem value="Arial">Arial</SelectItem>
-                                        <SelectItem value="Verdana">Verdana</SelectItem>
-                                        <SelectItem value="Georgia">Georgia</SelectItem>
-                                        <SelectItem value="Times New Roman">Times New Roman</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1">
-                                   <Label htmlFor="text-color-2" className="text-xs">Color</Label>
-                                    <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
-                                </div>
-                            </div>
-                            <div>
-                                <Label className="text-xs">Font Size: {fontSize}px</Label>
-                                <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} onValueCommit={saveStateToHistory} min={16} max={512} step={2}/>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                 <div className="flex items-center gap-1">
-                                   <Label className="text-xs">Align</Label>
-                                    <div className="flex gap-1">
-                                        <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('left'); saveStateToHistory();}} className="h-7 w-7"><AlignLeft className="h-4 w-4"/></Button>
-                                        <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('center'); saveStateToHistory();}} className="h-7 w-7"><AlignCenter className="h-4 w-4"/></Button>
-                                        <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('right'); saveStateToHistory();}} className="h-7 w-7"><AlignRight className="h-4 w-4"/></Button>
+                                    <h3 className="text-sm font-semibold mb-2">Shape Properties</h3>
+                                    <div className="space-y-2 p-2 rounded-lg bg-muted/50">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="shape-color" className="text-xs">Fill Color</Label>
+                                                <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor="stroke-color" className="text-xs">Border Color</Label>
+                                                <Input id="stroke-color" type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Border Width: {strokeWidth}px</Label>
+                                            <Slider value={[strokeWidth]} onValueChange={(v) => setStrokeWidth(v[0])} onValueCommit={saveStateToHistory} min={0} max={50} step={1}/>
+                                        </div>
                                     </div>
-                                 </div>
-                                 <div className="flex items-center space-x-2">
-                                    <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => {setFontWeight(c ? 'bold' : 'normal'); saveStateToHistory()}} />
-                                    <Label htmlFor="font-weight" className="text-xs">Bold</Label>
                                 </div>
-                            </div>
+                            )}
+                            
+                             {/* Typography */}
+                            {selectedElement?.type === 'text' && (
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2">Typography</h3>
+                                     <div className="p-2 rounded-lg bg-muted/50 space-y-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                             <div>
+                                                <Label className="text-xs">Font Family</Label>
+                                                <Select value={fontFamily} onValueChange={(v) => {setFontFamily(v); saveStateToHistory()}}>
+                                                  <SelectTrigger className="h-8 text-xs">
+                                                    <SelectValue placeholder="Select a font" />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="Space Grotesk">Space Grotesk</SelectItem>
+                                                    <SelectItem value="Arial">Arial</SelectItem>
+                                                    <SelectItem value="Verdana">Verdana</SelectItem>
+                                                    <SelectItem value="Georgia">Georgia</SelectItem>
+                                                    <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-1">
+                                               <Label htmlFor="text-color-2" className="text-xs">Color</Label>
+                                                <Input id="text-color-2" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Font Size: {fontSize}px</Label>
+                                            <Slider value={[fontSize]} onValueChange={(v) => setFontSize(v[0])} onValueCommit={saveStateToHistory} min={16} max={512} step={2}/>
+                                        </div>
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                             <div className="flex items-center gap-1">
+                                               <Label className="text-xs">Align</Label>
+                                                <div className="flex gap-1">
+                                                    <Button variant={textAlign === 'left' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('left'); saveStateToHistory();}} className="h-7 w-7"><AlignLeft className="h-4 w-4"/></Button>
+                                                    <Button variant={textAlign === 'center' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('center'); saveStateToHistory();}} className="h-7 w-7"><AlignCenter className="h-4 w-4"/></Button>
+                                                    <Button variant={textAlign === 'right' ? 'secondary' : 'ghost'} size="icon" onClick={() => {setTextAlign('right'); saveStateToHistory();}} className="h-7 w-7"><AlignRight className="h-4 w-4"/></Button>
+                                                </div>
+                                             </div>
+                                             <div className="flex items-center space-x-2">
+                                                <Switch id="font-weight" checked={fontWeight === 'bold'} onCheckedChange={(c) => {setFontWeight(c ? 'bold' : 'normal'); saveStateToHistory()}} />
+                                                <Label htmlFor="font-weight" className="text-xs">Bold</Label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                             {/* Element Properties */}
+                            {selectedElementId && (
+                                <div>
+                                    <h3 className="text-sm font-semibold mb-2">Element Properties</h3>
+                                    <div className="p-2 rounded-lg bg-muted/50 space-y-2">
+                                        <div>
+                                            <Label className="text-xs">Opacity: {Math.round(elementOpacity * 100)}%</Label>
+                                            <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} onValueCommit={saveStateToHistory} min={0} max={1} step={0.01}/>
+                                        </div>
+                                        {selectedElement?.type !== 'image' && <div className="space-y-1">
+                                            <Label className="text-xs">Layer</Label>
+                                            <div className="flex gap-2">
+                                                <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-3 w-3"/> Backward</Button>
+                                                <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-3 w-3"/> Forward</Button>
+                                            </div>
+                                        </div>}
+                                        <Button variant="destructive" size="sm" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full h-8 text-xs">
+                                            <Trash2 className="mr-2 h-3 w-3" /> Delete
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </AccordionContent>
-                 </AccordionItem>
-                )}
-
-                {selectedElementId && (
-                    <AccordionItem value="item-5">
-                        <AccordionTrigger className="p-3 text-sm font-semibold">Element Properties</AccordionTrigger>
-                        <AccordionContent className="p-2 space-y-2">
-                            <div className="p-2 rounded-lg bg-muted/50 space-y-2">
-                                 <div>
-                                    <Label className="text-xs">Opacity: {Math.round(elementOpacity * 100)}%</Label>
-                                    <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} onValueCommit={saveStateToHistory} min={0} max={1} step={0.01}/>
-                                </div>
-
-                                 {selectedElement?.type !== 'image' && <div className="space-y-1">
-                                    <Label className="text-xs">Layer</Label>
-                                    <div className="flex gap-2">
-                                        <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-3 w-3"/> Backward</Button>
-                                        <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-3 w-3"/> Forward</Button>
-                                    </div>
-                                </div>}
-
-                                <Button variant="destructive" size="sm" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full h-8 text-xs">
-                                    <Trash2 className="mr-2 h-3 w-3" /> Delete
-                                </Button>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                )}
-            </Accordion>
+                    </ScrollArea>
+                </CardContent>
+            </Card>
         </aside>
         <div 
           className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
@@ -868,3 +877,4 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
