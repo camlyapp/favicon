@@ -214,8 +214,8 @@ export function AppHeader({
                         <Button variant="ghost" size="icon" onClick={onRedo} disabled={!canRedo}>
                             <Redo className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" onClick={onSave}>
-                            <Save className="mr-0 sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Save</span>
+                        <Button size="icon" onClick={onSave}>
+                            <Save className="h-4 w-4" />
                         </Button>
                     </>
                 ) : (

@@ -42,6 +42,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 interface CanvasElement {
@@ -679,30 +680,56 @@ export default function EditorPageContent() {
                 <CardContent>
                     <ScrollArea className="h-[calc(100vh-200px)] pr-4">
                         <div className="space-y-4">
-                            {/* Canvas & Shapes */}
-                            <div>
-                                <h3 className="text-sm font-semibold mb-2">Canvas & Shapes</h3>
-                                <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                                    <Label className="text-xs">New Canvas</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Button size="sm" className="w-full text-xs" variant="secondary" onClick={handleNewCanvas}>
-                                            <RefreshCw className="mr-2 h-3 w-3" /> New
-                                        </Button>
-                                    </div>
+                            
+                            <TooltipProvider>
+                                <div className="space-y-2">
+                                     <h3 className="text-sm font-semibold mb-2">Tools</h3>
+                                     <div className="flex justify-start gap-1 p-1 rounded-lg bg-muted/50">
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleNewCanvas} className="h-8 w-8"><RefreshCw className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>New Canvas</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Add Square</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Add Circle</p></TooltipContent>
+                                        </Tooltip>
+                                         <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={addText} disabled={!textInput} className="h-8 w-8"><Type className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Add Text</p></TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Pencil</p></TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                 <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Eraser</p></TooltipContent>
+                                        </Tooltip>
+                                     </div>
                                 </div>
-                                <div className="space-y-2 p-2 rounded-lg bg-muted/50 mt-2">
-                                    <Label className="text-xs">Shapes</Label>
-                                    <div className="flex justify-start gap-2">
-                                        <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
-                                        <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
-                                    </div>
-                                </div>
-                            </div>
-                            <Separator />
+                            </TooltipProvider>
 
-                            {/* Text Tools */}
+                            <Separator />
+                            
+                             {/* Text Content */}
                             <div>
-                                <h3 className="text-sm font-semibold mb-2">Text Tools</h3>
+                                <h3 className="text-sm font-semibold mb-2">Text Content</h3>
                                 <div className="space-y-2 p-2 rounded-lg bg-muted/50">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div className="space-y-1">
@@ -714,22 +741,14 @@ export default function EditorPageContent() {
                                             <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
                                         </div>
                                     </div>
-                                     <Button className="w-full h-8 text-xs" variant="outline" onClick={addText} disabled={!textInput}>
-                                        <Type className="mr-2 h-3 w-3" />
-                                        Add Text
-                                    </Button>
                                 </div>
                             </div>
-                            <Separator />
                             
                             {/* Drawing Tools */}
+                             {(activeTool === 'pencil' || activeTool === 'eraser') && 
                              <div>
-                                <h3 className="text-sm font-semibold mb-2">Drawing Tools</h3>
+                                <h3 className="text-sm font-semibold mb-2">Drawing</h3>
                                 <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                                     <div className="flex justify-start gap-2">
-                                        <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
-                                        <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
-                                    </div>
                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {activeTool === 'pencil' && (
                                             <div className="space-y-1">
@@ -743,7 +762,7 @@ export default function EditorPageContent() {
                                         <Slider value={[drawStrokeWidth]} onValueChange={(v) => setDrawStrokeWidth(v[0])} min={1} max={100} step={1}/>
                                     </div>
                                 </div>
-                            </div>
+                            </div>}
                             
                             {/* Conditional Properties */}
                             {selectedElement && <Separator />}
@@ -828,16 +847,36 @@ export default function EditorPageContent() {
                                             <Label className="text-xs">Opacity: {Math.round(elementOpacity * 100)}%</Label>
                                             <Slider value={[elementOpacity]} onValueChange={(v) => setElementOpacity(v[0])} onValueCommit={saveStateToHistory} min={0} max={1} step={0.01}/>
                                         </div>
-                                        {selectedElement?.type !== 'image' && <div className="space-y-1">
-                                            <Label className="text-xs">Layer</Label>
-                                            <div className="flex gap-2">
-                                                <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="mr-2 h-3 w-3"/> Backward</Button>
-                                                <Button className="w-full h-8 text-xs" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="mr-2 h-3 w-3"/> Forward</Button>
-                                            </div>
-                                        </div>}
-                                        <Button variant="destructive" size="sm" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full h-8 text-xs">
-                                            <Trash2 className="mr-2 h-3 w-3" /> Delete
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            {selectedElement?.type !== 'image' && 
+                                                <>
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button className="w-full h-8" variant="outline" onClick={() => moveLayer('down')}><ArrowDown className="h-4 w-4"/></Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent><p>Move Backward</p></TooltipContent>
+                                                        </Tooltip>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button className="w-full h-8" variant="outline" onClick={() => moveLayer('up')}><ArrowUp className="h-4 w-4"/></Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent><p>Move Forward</p></TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </>
+                                            }
+                                            <TooltipProvider>
+                                                 <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button variant="destructive" size="icon" onClick={() => {deleteSelectedElement(); saveStateToHistory();}} className="w-full h-8">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>Delete Element</p></TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -877,4 +916,3 @@ export default function EditorPageContent() {
     </div>
   );
 }
-
