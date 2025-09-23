@@ -675,8 +675,8 @@ export default function EditorPageContent() {
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
       />
-      <main className="flex-1 grid grid-cols-3 gap-0">
-        <aside className="col-span-3 lg:col-span-1 border-r border-border flex flex-col p-4">
+      <main className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-0">
+        <aside className="col-span-1 md:col-span-1 border-r border-border flex flex-col p-4">
              <Card className="w-full">
                 <CardHeader>
                     <CardTitle className="text-xl">Editor Tools</CardTitle>
@@ -760,7 +760,7 @@ export default function EditorPageContent() {
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">Shape Properties</h3>
                                     <div className="space-y-2 p-2 rounded-lg bg-muted/50">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor="shape-color" className="text-xs">Fill Color</Label>
                                                 <Input id="shape-color" type="color" value={shapeColor} onChange={(e) => setShapeColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
@@ -787,7 +787,7 @@ export default function EditorPageContent() {
                                             <Label htmlFor="text-input" className="text-xs">Content</Label>
                                             <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                              <div>
                                                 <Label className="text-xs">Font Family</Label>
                                                 <Select value={fontFamily} onValueChange={(v) => {setFontFamily(v); saveStateToHistory()}}>
@@ -878,7 +878,7 @@ export default function EditorPageContent() {
             </Card>
         </aside>
         <div 
-          className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
+          className="col-span-1 md:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}
           onMouseUp={handleInteractionEnd}
           onMouseLeave={handleInteractionEnd}
