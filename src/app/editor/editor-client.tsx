@@ -293,6 +293,7 @@ export default function EditorPageContent() {
             setStrokeWidth(selectedElement.strokeWidth ?? 0);
         } else if (selectedElement.type === 'text') {
             setTextColor(selectedElement.color ?? '#A050C3');
+            setTextInput(selectedElement.text ?? 'A');
             setFontFamily(selectedElement.fontFamily ?? 'Space Grotesk');
             setFontSize(selectedElement.fontSize ?? 128);
             setTextAlign(selectedElement.textAlign ?? 'center');
@@ -604,9 +605,10 @@ export default function EditorPageContent() {
         const ctx = canvas.getContext('2d');
         if(!ctx) return;
         ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
-        const textMetrics = ctx.measureText(selectedElement.text!);
+        const textMetrics = ctx.measureText(textInput);
         
         updateSelectedElement({
+            text: textInput,
             fontSize,
             fontFamily,
             textAlign,
@@ -617,7 +619,7 @@ export default function EditorPageContent() {
         });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, selectedElement?.text, selectedElement?.id]);
+  }, [fontSize, fontFamily, textAlign, fontWeight, textColor, textInput, selectedElement?.id]);
 
   useEffect(() => {
     if (selectedElement?.type === 'shape') {
@@ -729,27 +731,6 @@ export default function EditorPageContent() {
 
                             <Separator />
                             
-                             <Collapsible>
-                                <CollapsibleTrigger className="flex items-center justify-between w-full">
-                                    <h3 className="text-sm font-semibold">Text Content</h3>
-                                    <ChevronDown className="h-4 w-4" />
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                    <div className="space-y-2 p-2 rounded-lg bg-muted/50 mt-2">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="text-input" className="text-xs">Content</Label>
-                                                <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
-                                            </div>
-                                             <div className="space-y-1">
-                                               <Label htmlFor="text-color" className="text-xs">Color</Label>
-                                                <Input id="text-color" type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} onBlur={saveStateToHistory} className="p-1 h-8 w-full cursor-pointer" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
-                            
                             
                             {/* Drawing Tools */}
                              {(activeTool === 'pencil' || activeTool === 'eraser') && 
@@ -802,6 +783,10 @@ export default function EditorPageContent() {
                                 <div>
                                     <h3 className="text-sm font-semibold mb-2">Typography</h3>
                                      <div className="p-2 rounded-lg bg-muted/50 space-y-2">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="text-input" className="text-xs">Content</Label>
+                                            <Input id="text-input" value={textInput} onChange={(e) => setTextInput(e.target.value)} maxLength={5} className="h-8 text-xs"/>
+                                        </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                              <div>
                                                 <Label className="text-xs">Font Family</Label>
@@ -923,5 +908,3 @@ export default function EditorPageContent() {
     </div>
   );
 }
-
-    
