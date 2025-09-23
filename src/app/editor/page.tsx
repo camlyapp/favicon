@@ -1,5 +1,6 @@
 import EditorPageContent from "./editor-client";
 import { Metadata } from "next";
+import { SeoSection } from "@/components/seo-section";
 
 export const metadata: Metadata = {
     title: "Favicon Editor",
@@ -11,6 +12,7 @@ export default function EditorPage() {
     return (
         <>
             <EditorPageContent />
+            <SeoSection />
         </>
     )
 }
