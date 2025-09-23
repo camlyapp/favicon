@@ -682,50 +682,52 @@ export default function EditorPageContent() {
                     <CardTitle className="text-xl">Editor Tools</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="h-[calc(100vh-200px)] pr-4">
-                        <div className="space-y-4">
+                    <ScrollArea className="h-[calc(100vh-200px)]">
+                        <div className="space-y-4 pr-6">
                             
                             <TooltipProvider>
                                 <div className="space-y-2">
                                      <h3 className="text-sm font-semibold mb-2">Tools</h3>
-                                     <div className="flex justify-start gap-1 p-1 rounded-lg bg-muted/50">
-                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={handleNewCanvas} className="h-8 w-8"><RefreshCw className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>New Canvas</p></TooltipContent>
-                                        </Tooltip>
-                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Add Square</p></TooltipContent>
-                                        </Tooltip>
-                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Add Circle</p></TooltipContent>
-                                        </Tooltip>
-                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={addText} disabled={!textInput} className="h-8 w-8"><Type className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Add Text</p></TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Pencil</p></TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                 <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Eraser</p></TooltipContent>
-                                        </Tooltip>
-                                     </div>
+                                     <ScrollArea className="w-full whitespace-nowrap">
+                                        <div className="flex w-max space-x-1 p-1">
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" size="icon" onClick={handleNewCanvas} className="h-8 w-8"><RefreshCw className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>New Canvas</p></TooltipContent>
+                                            </Tooltip>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" size="icon" onClick={() => addShape('square')} className="h-8 w-8"><Square className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Add Square</p></TooltipContent>
+                                            </Tooltip>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" size="icon" onClick={() => addShape('circle')} className="h-8 w-8"><Circle className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Add Circle</p></TooltipContent>
+                                            </Tooltip>
+                                             <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="outline" size="icon" onClick={addText} disabled={!textInput} className="h-8 w-8"><Type className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Add Text</p></TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant={activeTool === 'pencil' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'pencil' ? 'select' : 'pencil')} className="h-8 w-8"><Pencil className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Pencil</p></TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                     <Button variant={activeTool === 'eraser' ? 'secondary' : 'outline'} size="icon" onClick={() => setActiveTool(activeTool === 'eraser' ? 'select' : 'eraser')} className="h-8 w-8"><Eraser className="h-4 w-4"/></Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Eraser</p></TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                    </ScrollArea>
                                 </div>
                             </TooltipProvider>
 
@@ -908,3 +910,5 @@ export default function EditorPageContent() {
     </div>
   );
 }
+
+    
