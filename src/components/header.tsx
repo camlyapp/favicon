@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React,  { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -167,9 +167,32 @@ export function AppHeader({
     setIsExportDialogOpen,
 }: AppHeaderProps) {
     const router = useRouter();
+    const [isVisible, setIsVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    const controlHeader = () => {
+        if (typeof window !== 'undefined') {
+            if (window.scrollY > lastScrollY && window.scrollY > 80) { // if scroll down hide the header
+                setIsVisible(false);
+            } else { // if scroll up show the header
+                setIsVisible(true);
+            }
+            setLastScrollY(window.scrollY);
+        }
+    };
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.addEventListener('scroll', controlHeader);
+            return () => {
+                window.removeEventListener('scroll', controlHeader);
+            };
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lastScrollY]);
 
     return (
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20">
+        <header className={`flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-background/90 backdrop-blur-sm z-20 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
             <div className="flex items-center gap-1 sm:gap-3">
                 {isEditorPage ? (
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -231,5 +254,3 @@ export function AppHeader({
         </header>
     );
 }
-
-    
