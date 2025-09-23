@@ -73,7 +73,9 @@ interface HistoryState {
 }
 
 const EDITOR_RESOLUTION = 1024;
-const HANDLE_SIZE = 16;
+const DESKTOP_HANDLE_SIZE = 16;
+const MOBILE_HANDLE_SIZE = 32;
+
 type Handle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
 
 export default function EditorPageContent() {
@@ -113,8 +115,19 @@ export default function EditorPageContent() {
   
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [handleSize, setHandleSize] = useState(DESKTOP_HANDLE_SIZE);
 
   const selectedElement = elements.find(el => el.id === selectedElementId);
+  
+  useEffect(() => {
+    const checkSize = () => {
+        setHandleSize(window.innerWidth < 768 ? MOBILE_HANDLE_SIZE : DESKTOP_HANDLE_SIZE);
+    }
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
+  },[]);
+
 
   const saveStateToHistory = useCallback(() => {
     const currentState: HistoryState = { elements };
@@ -210,10 +223,10 @@ export default function EditorPageContent() {
 
             if (el.type === 'shape' || el.type === 'image') {
                 ctx.fillStyle = '#007BFF';
-                ctx.fillRect(el.x - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
-                ctx.fillRect(el.x + el.width - HANDLE_SIZE/2, el.y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
-                ctx.fillRect(el.x - HANDLE_SIZE/2, el.y + el.height - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
-                ctx.fillRect(el.x + el.width - HANDLE_SIZE/2, el.y + el.height - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+                ctx.fillRect(el.x - handleSize/2, el.y - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(el.x + el.width - handleSize/2, el.y - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(el.x - handleSize/2, el.y + el.height - handleSize/2, handleSize, handleSize);
+                ctx.fillRect(el.x + el.width - handleSize/2, el.y + el.height - handleSize/2, handleSize, handleSize);
             }
         }
 
@@ -282,7 +295,7 @@ export default function EditorPageContent() {
         renderCanvas();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [elements, selectedElementId]);
+  }, [elements, selectedElementId, handleSize]);
 
   useEffect(() => {
     if (selectedElement) {
@@ -378,7 +391,7 @@ export default function EditorPageContent() {
   }
 
    const getHandleAt = (x: number, y: number, el: CanvasElement): Handle => {
-      const halfHandle = HANDLE_SIZE / 2;
+      const halfHandle = handleSize / 2;
       if (x >= el.x - halfHandle && x <= el.x + halfHandle && y >= el.y - halfHandle && y <= el.y + halfHandle) return 'top-left';
       if (x >= el.x + el.width - halfHandle && x <= el.x + el.width + halfHandle && y >= el.y - halfHandle && y <= el.y + halfHandle) return 'top-right';
       if (x >= el.x - halfHandle && x <= el.x + halfHandle && y >= el.y + el.height - halfHandle && y <= el.y + el.height + halfHandle) return 'bottom-left';
@@ -551,7 +564,7 @@ export default function EditorPageContent() {
                 break;
         }
 
-        if (width > HANDLE_SIZE && height > HANDLE_SIZE) {
+        if (width > handleSize && height > handleSize) {
             updateSelectedElement({ x, y, width, height });
             setDragStart({ x: mouseX, y: mouseY });
         }
