@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, MouseEvent, useCallback } from 'react';
+import React, { useState, useRef, useEffect, MouseEvent, TouchEvent, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -381,18 +381,21 @@ export default function EditorPageContent() {
       return null;
     }
 
-
-  const getElementAt = (e: MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current) return {element: null, handle: null};
+  const getCanvasCoordinates = (clientX: number, clientY: number) => {
+    if (!canvasRef.current) return {x: 0, y: 0};
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
-    
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+    };
+  }
+
+  const getElementAt = (x: number, y: number) => {
     if (selectedElement && (selectedElement.type === 'shape' || selectedElement.type === 'image')) {
-        const handle = getHandleAt(mouseX, mouseY, selectedElement);
+        const handle = getHandleAt(x, y, selectedElement);
         if (handle) {
             return { element: selectedElement, handle };
         }
@@ -406,7 +409,7 @@ export default function EditorPageContent() {
                 // simple line collision check for now
                 const p1 = el.points[j];
                 const p2 = el.points[j+1];
-                const dist = Math.abs((p2.y - p1.y) * mouseX - (p2.x - p1.x) * mouseY + p2.x * p1.y - p2.y * p1.x) / Math.sqrt(Math.pow(p2.y-p1.y, 2) + Math.pow(p2.x - p1.x, 2));
+                const dist = Math.abs((p2.y - p1.y) * x - (p2.x - p1.x) * y + p2.x * p1.y - p2.y * p1.x) / Math.sqrt(Math.pow(p2.y-p1.y, 2) + Math.pow(p2.x - p1.x, 2));
                 if (dist < (el.strokeWidth || 5) / 2 + 5) { // 5px tolerance
                      return { element: el, handle: null };
                 }
@@ -416,32 +419,26 @@ export default function EditorPageContent() {
 
     for (let i = elements.length - 1; i >= 0; i--) {
         const el = elements[i];
-        if (el.type !== 'path' && mouseX >= el.x && mouseX <= el.x + el.width && mouseY >= el.y && mouseY <= el.y + el.height) {
+        if (el.type !== 'path' && x >= el.x && x <= el.x + el.width && y >= el.y && y <= el.y + el.height) {
             return { element: el, handle: null };
         }
     }
     return { element: null, handle: null };
   }
 
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
+  const handleInteractionStart = (clientX: number, clientY: number) => {
+     const { x, y } = getCanvasCoordinates(clientX, clientY);
 
     if (activeTool === 'pencil') {
         setIsDrawing(true);
         const newPath: CanvasElement = {
             id: `path_${Date.now()}`,
             type: 'path',
-            x: mouseX,
-            y: mouseY,
+            x: x,
+            y: y,
             width: 0,
             height: 0,
-            points: [{x: mouseX, y: mouseY}],
+            points: [{x, y}],
             color: drawColor,
             strokeWidth: drawStrokeWidth,
             opacity: 1
@@ -453,35 +450,38 @@ export default function EditorPageContent() {
 
     if (activeTool === 'eraser') {
       setIsDrawing(true);
-      // No new element, we are erasing existing ones
       return;
     }
 
-    const { element, handle } = getElementAt(e);
+    const { element, handle } = getElementAt(x, y);
 
     if (handle && element) {
         setIsResizing(handle);
         setSelectedElementId(element.id);
-        setDragStart({x: mouseX, y: mouseY});
+        setDragStart({x, y});
     } else if (element) {
         setSelectedElementId(element.id);
         setIsDragging(true);
-        setDragStart({ x: mouseX - element.x, y: mouseY - element.y });
+        setDragStart({ x: x - element.x, y: y - element.y });
     } else {
         setSelectedElementId(null);
     }
   }
+  
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    handleInteractionStart(e.clientX, e.clientY);
+  }
 
-  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
-    if (!canvasRef.current) return;
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    if (e.touches[0]) {
+      handleInteractionStart(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }
 
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
-    
+
+  const handleInteractionMove = (clientX: number, clientY: number) => {
+    const { x: mouseX, y: mouseY } = getCanvasCoordinates(clientX, clientY);
+
     if (isDrawing) {
         if(activeTool === 'pencil' && selectedElement?.type === 'path') {
             const newPoints = [...selectedElement.points!, {x: mouseX, y: mouseY}];
@@ -556,18 +556,32 @@ export default function EditorPageContent() {
             y: mouseY - dragStart.y
         });
     } else {
-        const { handle } = getElementAt(e);
+        if (!canvasRef.current) return;
+        const { handle } = getElementAt(mouseX, mouseY);
         if (handle) {
-            canvas.style.cursor = 'nwse-resize'; // A generic resize cursor
+            canvasRef.current.style.cursor = 'nwse-resize'; // A generic resize cursor
         } else if (activeTool === 'pencil' || activeTool === 'eraser') {
-            canvas.style.cursor = 'crosshair';
+            canvasRef.current.style.cursor = 'crosshair';
         } else {
-            canvas.style.cursor = 'default';
+            canvasRef.current.style.cursor = 'default';
         }
     }
   }
 
-  const handleMouseUp = () => {
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    handleInteractionMove(e.clientX, e.clientY);
+  }
+
+  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+     if (e.touches[0]) {
+       e.preventDefault();
+       handleInteractionMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }
+
+
+  const handleInteractionEnd = () => {
     if (isDrawing) {
         setIsDrawing(false);
         saveStateToHistory();
@@ -826,9 +840,12 @@ export default function EditorPageContent() {
         <div 
           className="col-span-3 lg:col-span-2 flex items-center justify-center bg-muted/20 p-4 relative"
           ref={canvasContainerRef}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          onMouseUp={handleInteractionEnd}
+          onMouseLeave={handleInteractionEnd}
           onMouseMove={handleMouseMove}
+          onTouchEnd={handleInteractionEnd}
+          onTouchCancel={handleInteractionEnd}
+          onTouchMove={handleTouchMove}
         >
             <div className="relative aspect-square w-full max-w-[400px] bg-white shadow-2xl rounded-2xl overflow-hidden"
                  style={{
@@ -842,6 +859,7 @@ export default function EditorPageContent() {
                     cursor: isDragging || isResizing ? 'grabbing' : (activeTool === 'pencil' || activeTool === 'eraser' ? 'crosshair' : 'default'),
                 }}
                 onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
             >
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full object-contain" />
             </div>
