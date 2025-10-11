@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
     Upload,
@@ -40,6 +42,7 @@ export default function HomePageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploaderRef = useRef<HTMLDivElement>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [previewBackgroundColor, setPreviewBackgroundColor] = useState('#FFFFFF');
   const { data: dominantColor } = useColor(faviconSrc || '', 'hex', {
     crossOrigin: 'anonymous',
     quality: 10,
@@ -485,11 +488,27 @@ export default function HomePageContent() {
              <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8">
               {showSizes && generatedSizes.length > 0 ? (
                  <Card className="flex-1 flex flex-col max-w-7xl w-full mx-auto">
-                    <CardHeader className="flex-row items-center justify-between border-b">
-                        <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-                           <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-primary"/> Previews
-                        </CardTitle>
-                        <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)}>
+                    <CardHeader className="flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b">
+                        <div className='flex items-center gap-2'>
+                             <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl">
+                                <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-primary"/> Previews
+                            </CardTitle>
+                            <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)} className="sm:hidden">
+                                <X className="w-5 h-5"/>
+                                <span className="sr-only">Close Previews</span>
+                            </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="preview-bg" className="text-sm font-medium">Background</Label>
+                            <Input
+                                id="preview-bg"
+                                type="color"
+                                value={previewBackgroundColor}
+                                onChange={(e) => setPreviewBackgroundColor(e.target.value)}
+                                className="p-1 h-8 w-14 cursor-pointer"
+                            />
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)} className="hidden sm:inline-flex">
                             <X className="w-5 h-5"/>
                             <span className="sr-only">Close Previews</span>
                         </Button>
@@ -499,7 +518,7 @@ export default function HomePageContent() {
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pr-4">
                               {generatedSizes.map(({ size, dataUrl }) => (
                                 <div key={size} className="flex flex-col items-center gap-3 p-3 rounded-lg bg-background border shadow-sm">
-                                  <div className="w-20 h-20 bg-white rounded-md flex items-center justify-center p-1 shadow-inner overflow-hidden">
+                                  <div className="w-20 h-20 rounded-md flex items-center justify-center p-1 shadow-inner overflow-hidden" style={{ backgroundColor: previewBackgroundColor }}>
                                     <Image src={dataUrl} alt={`Favicon ${size}x${size}`} width={size} height={size} className="object-contain" />
                                   </div>
                                   <span className="text-xs font-semibold">{size}x{size}</span>
@@ -558,3 +577,5 @@ export default function HomePageContent() {
     </>
   );
 }
+
+    
