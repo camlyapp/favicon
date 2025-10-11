@@ -44,6 +44,7 @@ interface ExportDialogProps {
   copyToClipboard: (text: string) => void;
   getWebmanifestContent: () => string;
   handleDownloadIco: () => void;
+  handleDownloadAndroidLauncher: () => void;
   children: React.ReactNode;
   isExportDialogOpen: boolean;
   setIsExportDialogOpen: (isOpen: boolean) => void;
@@ -56,6 +57,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   copyToClipboard,
   getWebmanifestContent,
   handleDownloadIco,
+  handleDownloadAndroidLauncher,
   children,
   isExportDialogOpen,
   setIsExportDialogOpen,
@@ -111,11 +113,14 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                     </TabsContent>
                 </Tabs>
                 <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-                    <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc} className="w-full sm:w-auto">
+                     <Button variant="secondary" onClick={handleDownloadAndroidLauncher} disabled={!faviconSrc}>
+                        <Download className="mr-2 h-4 w-4" /> Download for Android
+                    </Button>
+                    <Button variant="secondary" onClick={handleDownloadIco} disabled={!faviconSrc}>
                         <Download className="mr-2 h-4 w-4" /> Download favicon.ico
                     </Button>
                     <DialogClose asChild>
-                        <Button type="button" variant="outline" className="w-full sm:w-auto">
+                        <Button type="button" variant="outline">
                             Close
                         </Button>
                     </DialogClose>
@@ -138,6 +143,7 @@ interface AppHeaderProps {
     copyToClipboard?: (text: string) => void;
     getWebmanifestContent?: () => string;
     handleDownloadIco?: () => void;
+    handleDownloadAndroidLauncher?: () => void;
     generatedSizes?: GeneratedSize[];
     onUndo?: () => void;
     onRedo?: () => void;
@@ -159,6 +165,7 @@ export function AppHeader({
     copyToClipboard,
     getWebmanifestContent,
     handleDownloadIco,
+    handleDownloadAndroidLauncher,
     onUndo,
     onRedo,
     canUndo,
@@ -231,7 +238,7 @@ export function AppHeader({
                             <Eye className="mr-0 sm:mr-2 h-4 w-4" />
                             <span className="hidden sm:inline">Preview</span>
                         </Button>
-                        {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && isExportDialogOpen !== undefined && setIsExportDialogOpen !== undefined && (
+                        {handleDownloadZip && getHtmlCode && copyToClipboard && getWebmanifestContent && handleDownloadIco && handleDownloadAndroidLauncher && isExportDialogOpen !== undefined && setIsExportDialogOpen !== undefined && (
                              <ExportDialog
                                 faviconSrc={faviconSrc}
                                 handleDownloadZip={handleDownloadZip}
@@ -239,6 +246,7 @@ export function AppHeader({
                                 copyToClipboard={copyToClipboard}
                                 getWebmanifestContent={getWebmanifestContent}
                                 handleDownloadIco={handleDownloadIco}
+                                handleDownloadAndroidLauncher={handleDownloadAndroidLauncher}
                                 isExportDialogOpen={isExportDialogOpen}
                                 setIsExportDialogOpen={setIsExportDialogOpen}
                             >

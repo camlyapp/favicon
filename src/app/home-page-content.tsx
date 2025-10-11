@@ -283,6 +283,63 @@ export default function HomePageContent() {
     document.body.removeChild(link);
     setIsExportDialogOpen(false);
   };
+  
+  const handleDownloadAndroidLauncher = async () => {
+    if (!faviconSrc) {
+        toast({ title: "No image", description: "Please create or upload an image first.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const androidSizes = [
+            { size: 48, density: 'mdpi' },
+            { size: 72, density: 'hdpi' },
+            { size: 96, density: 'xhdpi' },
+            { size: 144, density: 'xxhdpi' },
+            { size: 192, density: 'xxxhdpi' },
+        ];
+
+        const highResSrc = await resizeImage(faviconSrc, 1024);
+
+        const resizedImages = await Promise.all(
+          androidSizes.map(async ({size, density}) => {
+            const dataUrl = await resizeImage(highResSrc, size);
+            return { size, density, dataUrl };
+          })
+        );
+        
+        const zip = new JSZip();
+        const resFolder = zip.folder('res');
+
+        resizedImages.forEach(({ density, dataUrl }) => {
+            const base64Data = dataUrl.split(',')[1];
+            resFolder!.folder(`mipmap-${density}`)!.file('ic_launcher.png', base64Data, { base64: true });
+        });
+        
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = 'android_launcher_icons.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+            title: 'Android Launcher Icons Downloaded',
+            description: 'The icon package has been successfully created.',
+        });
+        setIsExportDialogOpen(false);
+
+    } catch (error) {
+        console.error("Error generating Android launcher icons:", error);
+        toast({
+            title: 'Error Generating Icons',
+            description: 'Could not generate Android launcher icons.',
+            variant: 'destructive',
+        });
+    }
+  };
+
 
   const getHtmlCode = () => {
     return `
@@ -368,6 +425,7 @@ export default function HomePageContent() {
             generatedSizes={generatedSizes}
             isExportDialogOpen={isExportDialogOpen}
             setIsExportDialogOpen={setIsExportDialogOpen}
+            handleDownloadAndroidLauncher={handleDownloadAndroidLauncher}
         />
 
       <main className="flex-1 flex flex-col">
@@ -464,7 +522,3 @@ export default function HomePageContent() {
     </>
   );
 }
-
-    
-
-    
