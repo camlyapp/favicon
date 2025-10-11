@@ -1,10 +1,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sparkles, Eye, Package } from "lucide-react"
+import { Sparkles, Eye, Package, ImageIcon, HelpCircle } from "lucide-react"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 export function SeoSection() {
   return (
-    <section className="w-full py-12 bg-background border-t">
+    <section className="w-full py-12 lg:py-24 bg-background border-t">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
@@ -26,7 +33,7 @@ export function SeoSection() {
           </div>
           <div className="grid gap-1 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
-                <Eye className="h-8 w-8 text-primary" />
+                <ImageIcon className="h-8 w-8 text-primary" />
              </div>
             <h3 className="text-lg font-bold">Pixel-Perfect Previews</h3>
             <p className="text-sm text-muted-foreground">
@@ -43,9 +50,42 @@ export function SeoSection() {
             </p>
           </div>
         </div>
+
+        <div className="mx-auto max-w-5xl mt-16 lg:mt-24">
+            <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold tracking-tighter sm:text-3xl flex items-center justify-center gap-2">
+                    <HelpCircle className="w-7 h-7 text-primary"/>
+                    Frequently Asked Questions
+                </h3>
+            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>What exactly is a favicon?</AccordionTrigger>
+                <AccordionContent>
+                  A favicon (short for "favorite icon") is a small icon that represents a website. It appears in browser tabs, bookmark lists, search history, and in search results next to your site's URL. It's a key part of your website's visual identity.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-2">
+                <AccordionTrigger>Why is a favicon important for SEO and branding?</AccordionTrigger>
+                <AccordionContent>
+                  A favicon boosts brand recognition and builds user trust. When users see your icon in a list of tabs or search results, they can quickly identify your site. This improves click-through rates and enhances the user experience. While not a direct ranking factor, it contributes to a professional appearance that search engines and users value.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                <AccordionTrigger>What makes a good favicon?</AccordionTrigger>
+                <AccordionContent>
+                  A great favicon is simple, memorable, and scalable. It should be instantly recognizable even at a small size (16x16 pixels). Use your brand's logo or a key element from it, with clear contrast and minimal detail. Ensure it reflects your brand's colors and personality.
+                </AccordionContent>
+              </AccordionItem>
+                 <AccordionItem value="item-4">
+                <AccordionTrigger>What sizes do I need?</AccordionTrigger>
+                <AccordionContent>
+                 Different devices and browsers require different sizes. Our generator provides a complete package, including standard sizes like 16x16, 32x32, and larger sizes like 180x180 for Apple touch icons and 192x192 or 512x512 for Android/Chrome. This ensures your icon looks sharp everywhere.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+        </div>
       </div>
     </section>
   )
 }
-
-    
