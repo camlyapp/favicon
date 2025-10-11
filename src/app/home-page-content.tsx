@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import {
     Upload,
@@ -43,6 +44,7 @@ export default function HomePageContent() {
   const uploaderRef = useRef<HTMLDivElement>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [previewBackgroundColor, setPreviewBackgroundColor] = useState('#FFFFFF');
+  const [applyBgToDownloads, setApplyBgToDownloads] = useState(false);
   const { data: dominantColor } = useColor(faviconSrc || '', 'hex', {
     crossOrigin: 'anonymous',
     quality: 10,
@@ -105,9 +107,10 @@ export default function HomePageContent() {
     if (currentGeneratedSizes.length === 0 && faviconSrc) {
         try {
             const highResSrc = await resizeImage(faviconSrc, 1024);
+            const bgColor = applyBgToDownloads ? previewBackgroundColor : undefined;
             currentGeneratedSizes = await Promise.all(
                 SIZES.map(async (size) => {
-                    const dataUrl = await resizeImage(highResSrc, size);
+                    const dataUrl = await resizeImage(highResSrc, size, false, bgColor);
                     return { size, dataUrl };
                 })
             );
@@ -198,7 +201,7 @@ export default function HomePageContent() {
   };
 
 
-  const resizeImage = (src: string, size: number, circular = false): Promise<string> => {
+  const resizeImage = (src: string, size: number, circular = false, backgroundColor?: string): Promise<string> => {
       return new Promise((resolve, reject) => {
         const img = document.createElement('img');
         img.onload = () => {
@@ -208,6 +211,12 @@ export default function HomePageContent() {
             const ctx = canvas.getContext('2d');
             if (ctx) {
                 ctx.imageSmoothingQuality = 'high';
+                
+                if (backgroundColor) {
+                    ctx.fillStyle = backgroundColor;
+                    ctx.fillRect(0, 0, size, size);
+                }
+
                 if (circular) {
                     ctx.beginPath();
                     ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
@@ -240,10 +249,10 @@ export default function HomePageContent() {
 
     try {
         const highResSrc = await resizeImage(faviconSrc, 1024);
-
+        const bgColor = applyBgToDownloads ? previewBackgroundColor : undefined;
         const resizedImages = await Promise.all(
           SIZES.map(async (size) => {
-            const dataUrl = await resizeImage(highResSrc, size);
+            const dataUrl = await resizeImage(highResSrc, size, false, bgColor);
             return { size, dataUrl };
           })
         );
@@ -278,7 +287,8 @@ export default function HomePageContent() {
       return;
     }
     try {
-      const icoUrl = await resizeImage(faviconSrc, 32);
+      const bgColor = applyBgToDownloads ? previewBackgroundColor : undefined;
+      const icoUrl = await resizeImage(faviconSrc, 32, false, bgColor);
       downloadImage(icoUrl, 'favicon.ico');
       toast({ title: "Downloaded", description: "favicon.ico has been downloaded." });
     } catch (error) {
@@ -320,17 +330,18 @@ export default function HomePageContent() {
         
         const zip = new JSZip();
         const resFolder = zip.folder('res');
+        const bgColor = applyBgToDownloads ? previewBackgroundColor : undefined;
 
         // Generate standard and round launcher icons
         for (const { size, density } of androidSizes) {
             const mipmapFolder = resFolder!.folder(`mipmap-${density}`);
             
             // Standard icon
-            const standardIconDataUrl = await resizeImage(highResSrc, size);
+            const standardIconDataUrl = await resizeImage(highResSrc, size, false, bgColor);
             mipmapFolder!.file('ic_launcher.png', standardIconDataUrl.split(',')[1], { base64: true });
             
             // Round icon
-            const roundIconDataUrl = await resizeImage(highResSrc, size, true);
+            const roundIconDataUrl = await resizeImage(highResSrc, size, true, bgColor);
             mipmapFolder!.file('ic_launcher_round.png', roundIconDataUrl.split(',')[1], { base64: true });
         }
         
@@ -498,15 +509,27 @@ export default function HomePageContent() {
                                 <span className="sr-only">Close Previews</span>
                             </Button>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor="preview-bg" className="text-sm font-medium">Background</Label>
-                            <Input
-                                id="preview-bg"
-                                type="color"
-                                value={previewBackgroundColor}
-                                onChange={(e) => setPreviewBackgroundColor(e.target.value)}
-                                className="p-1 h-8 w-14 cursor-pointer"
-                            />
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="preview-bg" className="text-sm font-medium">Background</Label>
+                                <Input
+                                    id="preview-bg"
+                                    type="color"
+                                    value={previewBackgroundColor}
+                                    onChange={(e) => setPreviewBackgroundColor(e.target.value)}
+                                    className="p-1 h-8 w-14 cursor-pointer"
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="apply-bg"
+                                    checked={applyBgToDownloads}
+                                    onCheckedChange={(checked) => setApplyBgToDownloads(checked as boolean)}
+                                />
+                                <Label htmlFor="apply-bg" className="text-sm font-medium">
+                                    Apply to downloads
+                                </Label>
+                            </div>
                         </div>
                         <Button variant="ghost" size="icon" onClick={() => setShowSizes(false)} className="hidden sm:inline-flex">
                             <X className="w-5 h-5"/>
@@ -578,4 +601,4 @@ export default function HomePageContent() {
   );
 }
 
-    
+  
