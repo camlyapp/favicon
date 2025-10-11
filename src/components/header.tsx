@@ -112,7 +112,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                         </div>
                     </TabsContent>
                 </Tabs>
-                <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 pt-4 border-t">
                      <Button variant="secondary" onClick={handleDownloadAndroidLauncher} disabled={!faviconSrc}>
                         <Download className="mr-2 h-4 w-4" /> Download for Android
                     </Button>

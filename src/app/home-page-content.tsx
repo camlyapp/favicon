@@ -22,6 +22,7 @@ import {
 import JSZip from 'jszip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AppHeader } from '@/components/header';
+import { useColor } from 'color-thief-react';
 
 const SIZES = [16, 32, 48, 64, 72, 96, 114, 120, 128, 144, 152, 167, 180, 192, 196, 256, 384, 512, 1024];
 
@@ -39,6 +40,11 @@ export default function HomePageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploaderRef = useRef<HTMLDivElement>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const { data: dominantColor } = useColor(faviconSrc || '', 'hex', {
+    crossOrigin: 'anonymous',
+    quality: 10,
+  });
+
 
   useEffect(() => {
     const croppedImage = sessionStorage.getItem('croppedImage');
@@ -189,7 +195,7 @@ export default function HomePageContent() {
   };
 
 
-  const resizeImage = (src: string, size: number): Promise<string> => {
+  const resizeImage = (src: string, size: number, circular = false): Promise<string> => {
       return new Promise((resolve, reject) => {
         const img = document.createElement('img');
         img.onload = () => {
@@ -199,6 +205,12 @@ export default function HomePageContent() {
             const ctx = canvas.getContext('2d');
             if (ctx) {
                 ctx.imageSmoothingQuality = 'high';
+                if (circular) {
+                    ctx.beginPath();
+                    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
+                    ctx.closePath();
+                    ctx.clip();
+                }
                 ctx.drawImage(img, 0, 0, size, size);
                 resolve(canvas.toDataURL('image/png'));
             } else {
@@ -208,6 +220,7 @@ export default function HomePageContent() {
         img.onerror = () => {
             reject(new Error('Failed to load image for resizing.'));
         };
+        img.crossOrigin = 'anonymous';
         img.src = src;
     });
   };
@@ -298,24 +311,47 @@ export default function HomePageContent() {
             { size: 144, density: 'xxhdpi' },
             { size: 192, density: 'xxxhdpi' },
         ];
-
+        
+        const foregroundSize = 108;
         const highResSrc = await resizeImage(faviconSrc, 1024);
-
-        const resizedImages = await Promise.all(
-          androidSizes.map(async ({size, density}) => {
-            const dataUrl = await resizeImage(highResSrc, size);
-            return { size, density, dataUrl };
-          })
-        );
         
         const zip = new JSZip();
         const resFolder = zip.folder('res');
 
-        resizedImages.forEach(({ density, dataUrl }) => {
-            const base64Data = dataUrl.split(',')[1];
-            resFolder!.folder(`mipmap-${density}`)!.file('ic_launcher.png', base64Data, { base64: true });
-        });
+        // Generate standard and round launcher icons
+        for (const { size, density } of androidSizes) {
+            const mipmapFolder = resFolder!.folder(`mipmap-${density}`);
+            
+            // Standard icon
+            const standardIconDataUrl = await resizeImage(highResSrc, size);
+            mipmapFolder!.file('ic_launcher.png', standardIconDataUrl.split(',')[1], { base64: true });
+            
+            // Round icon
+            const roundIconDataUrl = await resizeImage(highResSrc, size, true);
+            mipmapFolder!.file('ic_launcher_round.png', roundIconDataUrl.split(',')[1], { base64: true });
+        }
         
+        // Generate adaptive icon foreground
+        const drawableFolder = resFolder!.folder('drawable');
+        const foregroundDataUrl = await resizeImage(faviconSrc, foregroundSize);
+        drawableFolder!.file('ic_launcher_foreground.png', foregroundDataUrl.split(',')[1], { base64: true });
+        
+        // Generate adaptive icon background
+        const backgroundColor = dominantColor || '#FFFFFF';
+        const backgroundXml = `<?xml version="1.0" encoding="utf-8"?><color xmlns:android="http://schemas.android.com/apk/res/android" android:color="${backgroundColor}" />`;
+        drawableFolder!.file('ic_launcher_background.xml', backgroundXml);
+
+        // Generate adaptive icon XML definitions
+        const anyDpiFolder = resFolder!.folder('mipmap-anydpi-v26');
+        const adaptiveIconXml = `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>`;
+        anyDpiFolder!.file('ic_launcher.xml', adaptiveIconXml);
+        anyDpiFolder!.file('ic_launcher_round.xml', adaptiveIconXml);
+
+
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(zipBlob);
@@ -326,7 +362,7 @@ export default function HomePageContent() {
 
         toast({
             title: 'Android Launcher Icons Downloaded',
-            description: 'The icon package has been successfully created.',
+            description: 'The complete icon package has been successfully created.',
         });
         setIsExportDialogOpen(false);
 
@@ -374,8 +410,8 @@ export default function HomePageContent() {
         "short_name": "Favicon",
         "start_url": ".",
         "display": "standalone",
-        "background_color": "#A050C3",
-        "theme_color": "#A050C3",
+        "background_color": dominantColor || "#A050C3",
+        "theme_color": dominantColor || "#A050C3",
         "description": "A modern, intuitive favicon creation app for generating pixel-perfect site icons.",
         "icons": [
             { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
